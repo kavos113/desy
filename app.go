@@ -4,9 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
+	"time"
 
 	domain "github.com/kavos113/desy/backend/domain"
 	"github.com/kavos113/desy/backend/presentation/repository/sqlite"
+	"github.com/kavos113/desy/backend/presentation/scraper"
 	"github.com/kavos113/desy/backend/usecase"
 
 	_ "modernc.org/sqlite"
@@ -17,6 +20,7 @@ type App struct {
 	ctx            context.Context
 	db             *sql.DB
 	lectureUsecase usecase.LectureUsecase
+	scraperUsecase usecase.ScraperUsecase
 }
 
 // NewApp creates a new App application struct
@@ -31,9 +35,13 @@ func NewApp() *App {
 		panic(fmt.Errorf("init lecture repository: %w", err))
 	}
 
+	fetcher := usecase.NewHTTPFetcher(&http.Client{Timeout: 15 * time.Second})
+	scraperUsecase := usecase.NewScraperUsecase(fetcher, lectureRepo, scraper.NewParser(), 3*time.Second)
+
 	return &App{
 		db:             db,
 		lectureUsecase: usecase.NewLectureUsecase(lectureRepo),
+		scraperUsecase: scraperUsecase,
 	}
 }
 
@@ -48,8 +56,18 @@ func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
 
-func (a *App) Scrape() {
+func (a *App) Scrape() error {
+	if a.scraperUsecase == nil {
+		return fmt.Errorf("scraper usecase is not configured")
+	}
 
+	ctx := a.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	_, err := a.scraperUsecase.ScrapeTopPageAndSave(ctx, time.Now().Year())
+	return err
 }
 
 func (a *App) SearchLectures(query domain.SearchQuery) ([]domain.LectureSummary, error) {

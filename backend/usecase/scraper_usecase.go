@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/kavos113/desy/backend/domain"
 	"github.com/kavos113/desy/backend/presentation/scraper"
 )
+
+const defaultScrapeDelay = 2 * time.Second
 
 // Fetcher describes the ability to load HTML content from a URL.
 type Fetcher interface {
@@ -22,23 +25,29 @@ type ScraperUsecase interface {
 	ScrapeCourseListAndSave(ctx context.Context, listURL, baseURL string) ([]domain.Lecture, error)
 	ScrapeCourseDetail(ctx context.Context, detailURL string) (*domain.Lecture, error)
 	ScrapeCourseDetailAndSave(ctx context.Context, detailURL string) (*domain.Lecture, error)
+	ScrapeTopPageAndSave(ctx context.Context, year int) ([]domain.Lecture, error)
 }
 
 type scraperUsecase struct {
 	fetcher     Fetcher
 	lectureRepo domain.LectureRepository
 	parser      scraper.Parser
+	delay       time.Duration
 }
 
 // NewScraperUsecase constructs a scraper usecase instance.
-func NewScraperUsecase(fetcher Fetcher, lectureRepo domain.LectureRepository, parser scraper.Parser) ScraperUsecase {
+func NewScraperUsecase(fetcher Fetcher, lectureRepo domain.LectureRepository, parser scraper.Parser, delay time.Duration) ScraperUsecase {
 	if parser == nil {
 		parser = scraper.NewParser()
+	}
+	if delay < 0 {
+		delay = defaultScrapeDelay
 	}
 	return &scraperUsecase{
 		fetcher:     fetcher,
 		lectureRepo: lectureRepo,
 		parser:      parser,
+		delay:       delay,
 	}
 }
 
@@ -82,6 +91,7 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 
 	lectures := make([]domain.Lecture, 0, len(items))
 	seen := make(map[string]struct{})
+	firstFetch := true
 
 	for _, item := range items {
 		if ctx != nil && ctx.Err() != nil {
@@ -96,6 +106,13 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 			continue
 		}
 		seen[detailURL] = struct{}{}
+
+		if !firstFetch {
+			if err := uc.sleep(ctx); err != nil {
+				return nil, err
+			}
+		}
+		firstFetch = false
 
 		lecture, err := uc.ScrapeCourseDetail(ctx, detailURL)
 		if err != nil {
@@ -167,4 +184,83 @@ func (uc *scraperUsecase) ScrapeCourseDetailAndSave(ctx context.Context, detailU
 	}
 
 	return lecture, nil
+}
+
+// ScrapeTopPageAndSave fetches the top page, scrapes each listed course page, and persists their lectures.
+func (uc *scraperUsecase) ScrapeTopPageAndSave(ctx context.Context, year int) ([]domain.Lecture, error) {
+	if uc.fetcher == nil {
+		return nil, errors.New("scraper fetcher is not initialized")
+	}
+
+	reader, err := uc.fetcher.Fetch(ctx, scraper.TopPageURL)
+	if err != nil {
+		return nil, fmt.Errorf("fetch top page %s: %w", scraper.TopPageURL, err)
+	}
+	if reader == nil {
+		return nil, fmt.Errorf("fetch top page %s: empty response", scraper.TopPageURL)
+	}
+	defer reader.Close()
+
+	urls, err := uc.parser.ListCoursesPagesURL(reader, year)
+	if err != nil {
+		return nil, err
+	}
+	if len(urls) == 0 {
+		return []domain.Lecture{}, nil
+	}
+
+	seen := make(map[string]struct{}, len(urls))
+	aggregated := make([]domain.Lecture, 0)
+	firstList := true
+
+	for _, listURL := range urls {
+		if ctx != nil && ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+
+		listURL = strings.TrimSpace(listURL)
+		if listURL == "" {
+			continue
+		}
+		if _, ok := seen[listURL]; ok {
+			continue
+		}
+		seen[listURL] = struct{}{}
+
+		if !firstList {
+			if err := uc.sleep(ctx); err != nil {
+				return nil, err
+			}
+		}
+		firstList = false
+
+		lectures, err := uc.ScrapeCourseListAndSave(ctx, listURL, scraper.TopPageURL)
+		if err != nil {
+			return nil, fmt.Errorf("scrape course list %s: %w", listURL, err)
+		}
+		aggregated = append(aggregated, lectures...)
+	}
+
+	return aggregated, nil
+}
+
+func (uc *scraperUsecase) sleep(ctx context.Context) error {
+	if uc.delay <= 0 {
+		return nil
+	}
+
+	timer := time.NewTimer(uc.delay)
+	defer timer.Stop()
+
+	if ctx == nil {
+		<-timer.C
+		return nil
+	}
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
 }

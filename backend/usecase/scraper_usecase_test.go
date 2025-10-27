@@ -26,7 +26,7 @@ func TestScraperUsecaseScrapeCourseDetailAndSave(t *testing.T) {
 		detailURL: readFixture(t, "course_detail.html"),
 	})
 
-	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser())
+	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser(), 0)
 
 	lecture, err := usecase.ScrapeCourseDetailAndSave(context.Background(), detailURL)
 	if err != nil {
@@ -81,7 +81,7 @@ func TestScraperUsecaseScrapeCourseListAndSave(t *testing.T) {
 		detailURL: readFixture(t, "course_detail.html"),
 	})
 
-	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser())
+	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser(), 0)
 
 	lectures, err := usecase.ScrapeCourseListAndSave(context.Background(), listURL, baseURL)
 	if err != nil {
@@ -106,6 +106,58 @@ func TestScraperUsecaseScrapeCourseListAndSave(t *testing.T) {
 	}
 	if len(stored.Teachers) == 0 {
 		t.Fatalf("expected stored teachers")
+	}
+}
+
+func TestScraperUsecaseScrapeTopPageAndSave(t *testing.T) {
+	repo, _ := newUsecaseTestRepository(t)
+
+	listURL := scraper.TopPageURL + "/courses/2025/4/mock-list"
+	detailURL := scraper.TopPageURL + "/courses/2025/LAH.S101"
+
+	topPage := fmt.Sprintf(`
+<html><body>
+  <a href="%s">ListA</a>
+  <a href="%s">ListA Duplicate</a>
+</body></html>`, listURL, listURL)
+
+	listHTML := `
+<html><body>
+<table class="c-table">
+  <tbody>
+    <tr>
+      <td>LAH.S101</td>
+      <td><a href="/courses/2025/LAH.S101">法学（憲法）Ａ</a></td>
+    </tr>
+  </tbody>
+</table>
+</body></html>`
+
+	fetcher := newMockFetcher(map[string]string{
+		scraper.TopPageURL: topPage,
+		listURL:            listHTML,
+		detailURL:          readFixture(t, "course_detail.html"),
+	})
+
+	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser(), 0)
+
+	lectures, err := usecase.ScrapeTopPageAndSave(context.Background(), 2025)
+	if err != nil {
+		t.Fatalf("ScrapeTopPageAndSave returned error: %v", err)
+	}
+	if len(lectures) != 1 {
+		t.Fatalf("expected single lecture, got %d", len(lectures))
+	}
+
+	stored, err := repo.FindByID(lectures[0].ID)
+	if err != nil {
+		t.Fatalf("FindByID returned error: %v", err)
+	}
+	if stored == nil {
+		t.Fatalf("expected stored lecture")
+	}
+	if stored.Code != "LAH.S101" {
+		t.Fatalf("unexpected stored code: %s", stored.Code)
 	}
 }
 
