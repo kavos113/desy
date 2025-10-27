@@ -12,8 +12,11 @@ import { SearchLectures as defaultSearchLectures } from "../../../wailsjs/go/mai
 import { domain } from "../../../wailsjs/go/models";
 
 type SearchProps = {
+  className?: string;
   onSearch?: (results: domain.LectureSummary[]) => void;
   onBack?: () => void;
+  onSearchStart?: () => void;
+  onSearchError?: (message: string) => void;
   searchLecturesFn?: typeof defaultSearchLectures;
 };
 
@@ -106,7 +109,7 @@ const buildSearchQuery = (condition: SearchCondition): domain.SearchQuery => {
   });
 };
 
-const Search = ({ onSearch, onBack, searchLecturesFn }: SearchProps) => {
+const Search = ({ className, onSearch, onBack, onSearchStart, onSearchError, searchLecturesFn }: SearchProps) => {
   const [condition, setCondition] = useState<SearchCondition>(initialCondition);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,6 +139,7 @@ const Search = ({ onSearch, onBack, searchLecturesFn }: SearchProps) => {
       return;
     }
 
+    onSearchStart?.();
     setSearching(true);
     setError(null);
 
@@ -143,16 +147,20 @@ const Search = ({ onSearch, onBack, searchLecturesFn }: SearchProps) => {
       const query = buildSearchQuery(condition);
       const results = await searchLectures(query);
       onSearch?.(results);
+      onBack?.();
     } catch (err) {
       console.error(err);
       setError("検索に失敗しました。");
+      onSearchError?.("検索に失敗しました。");
     } finally {
       setSearching(false);
     }
   };
 
+  const wrapperClassName = ["search-wrapper", className].filter(Boolean).join(" ");
+
   return (
-    <div className="search-wrapper">
+    <div className={wrapperClassName}>
       <FetchButton className="fetch" />
       <SearchField onConditionChange={handleConditionChange} onTimetableChange={handleTimetableChange} />
       <div className="search-actions">
