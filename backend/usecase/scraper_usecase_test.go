@@ -12,6 +12,7 @@ import (
 
 	"github.com/kavos113/desy/backend/domain"
 	"github.com/kavos113/desy/backend/presentation/repository/sqlite"
+	"github.com/kavos113/desy/backend/presentation/scraper"
 	_ "modernc.org/sqlite"
 )
 
@@ -25,7 +26,7 @@ func TestScraperUsecaseScrapeCourseDetailAndSave(t *testing.T) {
 		detailURL: readFixture(t, "course_detail.html"),
 	})
 
-	usecase := NewScraperUsecase(fetcher, repo)
+	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser())
 
 	lecture, err := usecase.ScrapeCourseDetailAndSave(context.Background(), detailURL)
 	if err != nil {
@@ -80,7 +81,7 @@ func TestScraperUsecaseScrapeCourseListAndSave(t *testing.T) {
 		detailURL: readFixture(t, "course_detail.html"),
 	})
 
-	usecase := NewScraperUsecase(fetcher, repo)
+	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser())
 
 	lectures, err := usecase.ScrapeCourseListAndSave(context.Background(), listURL, baseURL)
 	if err != nil {

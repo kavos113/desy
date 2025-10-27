@@ -27,13 +27,18 @@ type ScraperUsecase interface {
 type scraperUsecase struct {
 	fetcher     Fetcher
 	lectureRepo domain.LectureRepository
+	parser      scraper.Parser
 }
 
 // NewScraperUsecase constructs a scraper usecase instance.
-func NewScraperUsecase(fetcher Fetcher, lectureRepo domain.LectureRepository) ScraperUsecase {
+func NewScraperUsecase(fetcher Fetcher, lectureRepo domain.LectureRepository, parser scraper.Parser) ScraperUsecase {
+	if parser == nil {
+		parser = scraper.NewParser()
+	}
 	return &scraperUsecase{
 		fetcher:     fetcher,
 		lectureRepo: lectureRepo,
+		parser:      parser,
 	}
 }
 
@@ -53,7 +58,7 @@ func (uc *scraperUsecase) ScrapeCourseList(ctx context.Context, listURL, baseURL
 	}
 	defer reader.Close()
 
-	items, err := scraper.ParseCourseList(reader, baseURL)
+	items, err := uc.parser.ParseCourseList(reader, baseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +140,7 @@ func (uc *scraperUsecase) ScrapeCourseDetail(ctx context.Context, detailURL stri
 	}
 	defer reader.Close()
 
-	lecture, err := scraper.ParseCourseDetail(reader, detailURL)
+	lecture, err := uc.parser.ParseCourseDetail(reader, detailURL)
 	if err != nil {
 		return nil, err
 	}
