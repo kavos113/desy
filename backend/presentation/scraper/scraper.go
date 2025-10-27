@@ -90,6 +90,7 @@ func ParseCourseDetail(r io.Reader, detailURL string) (*domain.Lecture, error) {
 	lecture.Teachers = parseTeachers(extractDefinition(doc, "担当教員"))
 	lecture.LectureType = parseLectureType(extractDefinition(doc, "授業形態"))
 	lecture.Code = extractDefinition(doc, "科目コード")
+	lecture.Level = parseLevelFromCode(lecture.Code)
 	lecture.Credit = parseCredit(extractDefinition(doc, "単位数"))
 	lecture.Year = parseFirstInt(extractDefinition(doc, "開講時期"))
 	quarter := extractDefinition(doc, "開講クォーター")
@@ -296,6 +297,33 @@ func parseCredit(raw string) int {
 	}
 }
 
+func parseLevelFromCode(code string) domain.Level {
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return 0
+	}
+	digits := numberRegexp.FindString(code)
+	if digits == "" {
+		return 0
+	}
+	switch digits[0] {
+	case '1':
+		return domain.LevelBachelor1
+	case '2':
+		return domain.LevelBachelor2
+	case '3', '4':
+		return domain.LevelBachelor3
+	case '5':
+		return domain.LevelMaster1
+	case '6':
+		return domain.LevelMaster2
+	case '8':
+		return domain.LevelDoctor
+	default:
+		return 0
+	}
+}
+
 func parseKeywords(raw string) []string {
 	if raw == "" {
 		return nil
@@ -364,8 +392,18 @@ func parseTimetables(raw, quarter string) []domain.TimeTable {
 	if raw == "" || raw == "-" {
 		return nil
 	}
+	semesters := domain.FromQuarter(quarter)
+	if len(semesters) == 0 {
+		trimmed := strings.TrimSpace(quarter)
+		if trimmed != "" {
+			semesters = []domain.Semester{domain.Semester(trimmed)}
+		}
+	}
+	if len(semesters) == 0 {
+		semesters = []domain.Semester{""}
+	}
 	entries := splitLines(raw)
-	timetables := make([]domain.TimeTable, 0, len(entries))
+	timetables := make([]domain.TimeTable, 0, len(entries)*len(semesters))
 	for _, entry := range entries {
 		if entry == "" {
 			continue
@@ -388,11 +426,13 @@ func parseTimetables(raw, quarter string) []domain.TimeTable {
 		periodPart := strings.TrimSpace(entry[1:])
 		numbers := numberRegexp.FindAllString(periodPart, -1)
 		if len(numbers) == 0 {
-			tt := domain.TimeTable{Semester: domain.Semester(quarter), DayOfWeek: day}
-			if roomName != "" {
-				tt.Room.Name = roomName
+			for _, semester := range semesters {
+				tt := domain.TimeTable{Semester: semester, DayOfWeek: day}
+				if roomName != "" {
+					tt.Room.Name = roomName
+				}
+				timetables = append(timetables, tt)
 			}
-			timetables = append(timetables, tt)
 			continue
 		}
 		for _, num := range numbers {
@@ -400,11 +440,13 @@ func parseTimetables(raw, quarter string) []domain.TimeTable {
 			if err != nil {
 				continue
 			}
-			tt := domain.TimeTable{Semester: domain.Semester(quarter), DayOfWeek: day, Period: domain.Period(p)}
-			if roomName != "" {
-				tt.Room.Name = roomName
+			for _, semester := range semesters {
+				tt := domain.TimeTable{Semester: semester, DayOfWeek: day, Period: domain.Period(p)}
+				if roomName != "" {
+					tt.Room.Name = roomName
+				}
+				timetables = append(timetables, tt)
 			}
-			timetables = append(timetables, tt)
 		}
 	}
 	return timetables

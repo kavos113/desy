@@ -11,7 +11,7 @@ const (
 	SemesterWinter Semester = "winter"
 )
 
-func fromQuarter(quarter string) []Semester {
+func FromQuarter(quarter string) []Semester {
 	quarter = strings.TrimSpace(quarter)
 	if quarter == "" {
 		return nil

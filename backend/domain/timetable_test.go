@@ -20,7 +20,7 @@ func TestSemesterFromQuarter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.quarter, func(t *testing.T) {
-			got := fromQuarter(tt.quarter)
+			got := FromQuarter(tt.quarter)
 			if len(got) != len(tt.expected) {
 				t.Errorf("unexpected length: got %d, want %d", len(got), len(tt.expected))
 				return
