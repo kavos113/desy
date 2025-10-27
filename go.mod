@@ -3,7 +3,6 @@ module github.com/kavos113/desy
 go 1.23
 
 require (
-	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/wailsapp/wails/v2 v2.10.1
 	modernc.org/sqlite v1.29.0
 )

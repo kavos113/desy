@@ -9,7 +9,7 @@ import (
 	"github.com/kavos113/desy/backend/presentation/repository/sqlite"
 	"github.com/kavos113/desy/backend/usecase"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 // App struct
@@ -21,7 +21,7 @@ type App struct {
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	db, err := sql.Open("sqlite3", "file:desy.db?_foreign_keys=on")
+	db, err := sql.Open("sqlite", "file:desy.db?_pragma=foreign_keys(1)")
 	if err != nil {
 		panic(fmt.Errorf("open sqlite database: %w", err))
 	}
