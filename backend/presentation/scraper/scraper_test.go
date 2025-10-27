@@ -56,96 +56,203 @@ func TestParseCourseDetail(t *testing.T) {
 		t.Fatalf("ParseCourseDetail returned error: %v", err)
 	}
 
-	if lecture.Title != "法学（憲法）Ａ" {
-		t.Errorf("unexpected title: %s", lecture.Title)
-	}
-	if lecture.Department != "文系教養科目" {
-		t.Errorf("unexpected department: %s", lecture.Department)
-	}
-	if lecture.Code != "LAH.S101" {
-		t.Errorf("unexpected code: %s", lecture.Code)
-	}
-	if lecture.Language != "日本語" {
-		t.Errorf("unexpected language: %s", lecture.Language)
-	}
-	if lecture.Year != 2025 {
-		t.Errorf("unexpected year: %d", lecture.Year)
-	}
-	if lecture.Credit != 1 {
-		t.Errorf("unexpected credit: %d", lecture.Credit)
-	}
-	if lecture.LectureType != domain.LectureTypeOffline {
-		t.Errorf("unexpected lecture type: %s", lecture.LectureType)
+	expected := &domain.Lecture{
+		ID: 	   1,
+		University: "東京科学大学",
+		Title:      "法学（憲法）Ａ",
+		Department: "文系教養科目",
+		LectureType: domain.LectureTypeOffline,	
+		Code:       "LAH.S101",
+		Level: domain.LevelBachelor1,
+		Credit: 1,
+		Year:       2025,
+		Language: "英語",
+		Url: "https://example.com/courses/2025/LAH.S101",
+		Abstract: "憲法の基本的人権",
+		Goal: "基本的人権",
+		Experience: "弁護士",
+		Flow: "法律初学者を想定し",
+		OutOfClassWork: "学修効果",
+		Textbook: "憲法（第八版）",
+		ReferenceBook: "マンガ僕たちの日本国憲法",
+		Assessment: "期末",
+		Prerequisite: "歓迎します",
+		Contact: "",
+		OfficeHours: "",
+		Note: "日本国憲法は",
+		Timetables: []domain.TimeTable{
+			{
+				LectureID: 1,
+				Semester: domain.SemesterFall,
+				DayOfWeek: domain.DayOfWeekMonday,
+				Period:    domain.Period5,
+				Room: domain.Room{
+					Name: "S3-215(S321)",
+				},
+			},
+			{
+				LectureID: 1,
+				Semester: domain.SemesterFall,
+				DayOfWeek: domain.DayOfWeekMonday,
+				Period:    domain.Period6,
+				Room: domain.Room{
+					Name: "S3-215(S321)",
+				},
+			},
+		},
+		Teachers: []domain.Teacher{
+			{
+				Name: "篠島 正幸",
+			},
+		},
+		LecturePlans: []domain.LecturePlan{
+			{
+				Count: 1,
+				Plan: "講義ガイダンス",
+				Assignment: "社会における",
+			},
+			{
+				Count: 2,
+				Plan: "憲法の基本理念",
+				Assignment: "憲法の条項",
+			},
+		},
+		Keywords: []string{"憲法", "法律", "人権", "教養"},
+		RelatedCourses: []int{},
 	}
 
-	if got, want := len(lecture.Teachers), 1; got != want {
-		t.Fatalf("unexpected teachers length: %d", got)
+	if lecture.Title != expected.Title {
+		t.Errorf("unexpected title: got %s, want %s", lecture.Title, expected.Title)
 	}
-	if lecture.Teachers[0].Name != "篠島 正幸" {
-		t.Errorf("unexpected teacher: %s", lecture.Teachers[0].Name)
+	if lecture.University != expected.University {
+		t.Errorf("unexpected university: got %s, want %s", lecture.University, expected.University)
+	}
+	if lecture.Title != expected.Title {
+		t.Errorf("unexpected title: got %s, want %s", lecture.Title, expected.Title)
+	}
+	if lecture.Department != expected.Department {
+		t.Errorf("unexpected department: got %s, want %s", lecture.Department, expected.Department)
+	}
+	if lecture.LectureType != expected.LectureType {
+		t.Errorf("unexpected lecture type: got %s, want %s", lecture.LectureType, expected.LectureType)
+	}
+	if lecture.Code != expected.Code {
+		t.Errorf("unexpected code: got %s, want %s", lecture.Code, expected.Code)
+	}
+	if lecture.Level != expected.Level {
+		t.Errorf("unexpected level: got %d, want %d", lecture.Level, expected.Level)
+	}
+	if lecture.Credit != expected.Credit {
+		t.Errorf("unexpected credit: got %d, want %d", lecture.Credit, expected.Credit)
+	}
+	if lecture.Year != expected.Year {
+		t.Errorf("unexpected year: got %d, want %d", lecture.Year, expected.Year)
+	}
+	if lecture.Language != expected.Language {
+		t.Errorf("unexpected language: got %s, want %s", lecture.Language, expected.Language)
+	}
+	if lecture.Url != expected.Url {
+		t.Errorf("unexpected url: got %s, want %s", lecture.Url, expected.Url)
+	}
+	if !strings.Contains(lecture.Abstract, expected.Abstract) {
+		t.Errorf("unexpected abstract: got %s, want to contain %s", lecture.Abstract, expected.Abstract)
+	}
+	if !strings.Contains(lecture.Goal, expected.Goal) {
+		t.Errorf("unexpected goal: got %s, want to contain %s", lecture.Goal, expected.Goal)
+	}
+	if !strings.Contains(lecture.Experience, expected.Experience) {
+		t.Errorf("unexpected experience: got %s, want to contain %s", lecture.Experience, expected.Experience)
+	}
+	if !strings.Contains(lecture.Flow, expected.Flow) {
+		t.Errorf("unexpected flow: got %s, want to contain %s", lecture.Flow, expected.Flow)
+	}
+	if !strings.Contains(lecture.OutOfClassWork, expected.OutOfClassWork) {
+		t.Errorf("unexpected out of class work: got %s, want to contain %s", lecture.OutOfClassWork, expected.OutOfClassWork)
+	}
+	if !strings.Contains(lecture.Textbook, expected.Textbook) {
+		t.Errorf("unexpected textbook: got %s, want to contain %s", lecture.Textbook, expected.Textbook)
+	}
+	if !strings.Contains(lecture.ReferenceBook, expected.ReferenceBook) {
+		t.Errorf("unexpected reference book: got %s, want to contain %s", lecture.ReferenceBook, expected.ReferenceBook)
+	}
+	if !strings.Contains(lecture.Assessment, expected.Assessment) {
+		t.Errorf("unexpected assessment: got %s, want to contain %s", lecture.Assessment, expected.Assessment)
+	}
+	if !strings.Contains(lecture.Prerequisite, expected.Prerequisite) {
+		t.Errorf("unexpected prerequisite: got %s, want to contain %s", lecture.Prerequisite, expected.Prerequisite)
+	}
+	if !strings.Contains(lecture.Contact, expected.Contact) {
+		t.Errorf("unexpected contact: got %s, want to contain %s", lecture.Contact, expected.Contact)	
+	}
+	if !strings.Contains(lecture.OfficeHours, expected.OfficeHours) {
+		t.Errorf("unexpected office hours: got %s, want to contain %s", lecture.OfficeHours, expected.OfficeHours)
+	}
+	if !strings.Contains(lecture.Note, expected.Note) {
+		t.Errorf("unexpected note: got %s, want to contain %s", lecture.Note, expected.Note)
 	}
 
-	if len(lecture.Keywords) != 4 {
-		t.Fatalf("unexpected keywords length: %d", len(lecture.Keywords))
+	if len(lecture.Timetables) != len(expected.Timetables) {
+		t.Fatalf("unexpected number of timetables: got %d, want %d", len(lecture.Timetables), len(expected.Timetables))
 	}
-	if lecture.Keywords[0] != "憲法" {
-		t.Errorf("unexpected first keyword: %s", lecture.Keywords[0])
-	}
-
-	if len(lecture.Timetables) != 2 {
-		t.Fatalf("unexpected timetable length: %d", len(lecture.Timetables))
-	}
-	if lecture.Timetables[0].DayOfWeek != domain.DayOfWeekMonday {
-		t.Errorf("unexpected day of week: %s", lecture.Timetables[0].DayOfWeek)
-	}
-	if lecture.Timetables[0].Period != domain.Period5 {
-		t.Errorf("unexpected first period: %d", lecture.Timetables[0].Period)
-	}
-	if lecture.Timetables[0].Room.Name != "S3-215(S321)" {
-		t.Errorf("unexpected room name: %s", lecture.Timetables[0].Room.Name)
-	}
-
-	if len(lecture.LecturePlans) != 8 {
-		t.Fatalf("unexpected lecture plans length: %d", len(lecture.LecturePlans))
-	}
-	if lecture.LecturePlans[0].Count != 1 {
-		t.Errorf("unexpected first plan count: %d", lecture.LecturePlans[0].Count)
-	}
-	if !strings.Contains(lecture.LecturePlans[0].Plan, "講義ガイダンス") {
-		t.Errorf("unexpected plan text: %s", lecture.LecturePlans[0].Plan)
-	}
-	if !strings.Contains(lecture.LecturePlans[0].Assignment, "CaseStudy") {
-		t.Errorf("unexpected assignment text: %s", lecture.LecturePlans[0].Assignment)
+	for i, tt := range lecture.Timetables {
+		expTT := expected.Timetables[i]
+		if tt.Semester != expTT.Semester {
+			t.Errorf("unexpected timetable semester at index %d: got %s, want %s", i, tt.Semester, expTT.Semester)
+		}
+		if tt.DayOfWeek != expTT.DayOfWeek {
+			t.Errorf("unexpected timetable day of week at index %d: got %s, want %s", i, tt.DayOfWeek, expTT.DayOfWeek)
+		}
+		if tt.Period != expTT.Period {
+			t.Errorf("unexpected timetable period at index %d: got %d, want %d", i, tt.Period, expTT.Period)
+		}
+		if tt.Room.Name != expTT.Room.Name {
+			t.Errorf("unexpected timetable room name at index %d: got %s, want %s", i, tt.Room.Name, expTT.Room.Name)
+		}
 	}
 
-	if !strings.Contains(lecture.Abstract, "憲法の基本的人権") {
-		t.Errorf("unexpected abstract: %s", lecture.Abstract)
+	if len(lecture.Teachers) != len(expected.Teachers) {
+		t.Fatalf("unexpected number of teachers: got %d, want %d", len(lecture.Teachers), len(expected.Teachers))
 	}
-	if !strings.Contains(lecture.Goal, "基本的人権") {
-		t.Errorf("unexpected goal: %s", lecture.Goal)
+	for i, teacher := range lecture.Teachers {
+		expTeacher := expected.Teachers[i]
+		if teacher.Name != expTeacher.Name {
+			t.Errorf("unexpected teacher name at index %d: got %s, want %s", i, teacher.Name, expTeacher.Name)
+		}
 	}
-	if !strings.Contains(lecture.Flow, "法律初学者を想定し") {
-		t.Errorf("unexpected flow: %s", lecture.Flow)
+
+	if len(lecture.LecturePlans) != len(expected.LecturePlans) {
+		t.Fatalf("unexpected number of lecture plans: got %d, want %d", len(lecture.LecturePlans), len(expected.LecturePlans))
 	}
-	if !strings.Contains(lecture.OutOfClassWork, "学修効果") {
-		t.Errorf("unexpected out of class work: %s", lecture.OutOfClassWork)
+	for i, plan := range lecture.LecturePlans {
+		expPlan := expected.LecturePlans[i]
+		if plan.Count != expPlan.Count {
+			t.Errorf("unexpected lecture plan count at index %d: got %d, want %d", i, plan.Count, expPlan.Count)
+		}
+		if !strings.Contains(plan.Plan, expPlan.Plan) {
+			t.Errorf("unexpected lecture plan at index %d: got %s, want to contain %s", i, plan.Plan, expPlan.Plan)
+		}
+		if !strings.Contains(plan.Assignment, expPlan.Assignment) {
+			t.Errorf("unexpected lecture assignment at index %d: got %s, want to contain %s", i, plan.Assignment, expPlan.Assignment)
+		}
 	}
-	if !strings.Contains(lecture.Textbook, "憲法（第八版）") {
-		t.Errorf("unexpected textbook: %s", lecture.Textbook)
+
+	if len(lecture.Keywords) != len(expected.Keywords) {
+		t.Fatalf("unexpected number of keywords: got %d, want %d", len(lecture.Keywords), len(expected.Keywords))
 	}
-	if !strings.Contains(lecture.ReferenceBook, "マンガ僕たちの日本国憲法") {
-		t.Errorf("unexpected reference book: %s", lecture.ReferenceBook)
+	for i, keyword := range lecture.Keywords {
+		expKeyword := expected.Keywords[i]
+		if keyword != expKeyword {
+			t.Errorf("unexpected keyword at index %d: got %s, want %s", i, keyword, expKeyword)
+		}
 	}
-	if !strings.Contains(lecture.Assessment, "期末") {
-		t.Errorf("unexpected assessment: %s", lecture.Assessment)
+
+	if len(lecture.RelatedCourses) != len(expected.RelatedCourses) {
+		t.Fatalf("unexpected number of related courses: got %d, want %d", len(lecture.RelatedCourses), len(expected.RelatedCourses))
 	}
-	if !strings.Contains(lecture.Experience, "弁護士") {
-		t.Errorf("unexpected experience text: %s", lecture.Experience)
-	}
-	if !strings.Contains(lecture.Prerequisite, "歓迎します") {
-		t.Errorf("unexpected prerequisite: %s", lecture.Prerequisite)
-	}
-	if !strings.Contains(lecture.Note, "日本国憲法は") {
-		t.Errorf("unexpected note: %s", lecture.Note)
-	}
+	for i, relatedCourse := range lecture.RelatedCourses {
+		expRelatedCourse := expected.RelatedCourses[i]
+		if relatedCourse != expRelatedCourse {
+			t.Errorf("unexpected related course at index %d: got %s, want %s", i, relatedCourse, expRelatedCourse)
+		}
+	}	
 }
