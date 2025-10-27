@@ -42,6 +42,28 @@ func TestParseCourseList(t *testing.T) {
 	if third.DetailURL == "" {
 		t.Fatalf("third detail url should not be empty")
 	}
+
+	f, err := os.Open("fixture/course_list_full.html")
+	if err != nil {
+		t.Fatalf("open course list fixture: %v", err)
+	}
+	defer f.Close()
+
+	items, err = ParseCourseList(f, "https://syllabus.s.isct.ac.jp")
+	if err != nil {
+		t.Fatalf("ParseCourseList returned error: %v", err)
+	}
+
+	first = items[0]
+	if first.Code != "MCS.M201" {
+		t.Errorf("unexpected code: %s", first.Code)
+	}
+	if first.Title != "B2D研究基礎a（数理・計算科学系）" {
+		t.Errorf("unexpected title: %s", first.Title)
+	}
+	if first.DetailURL != "https://syllabus.s.isct.ac.jp/courses/2025/4/0-904-342200-0-0/202534815" {
+		t.Errorf("unexpected url: %s", first.DetailURL)
+	}
 }
 
 func TestParseCourseDetail(t *testing.T) {
@@ -183,6 +205,105 @@ func TestParseCourseDetail(t *testing.T) {
 						Count:      2,
 						Plan:       "憲法の基本理念",
 						Assignment: "憲法の条項",
+					},
+				},
+				Keywords:       []string{"憲法", "法律", "人権", "教養"},
+				RelatedCourses: []int{},
+			},
+		},
+		{
+			name:      "default",
+			fixture:   "fixture/course_detail_full.html",
+			detailURL: "https://example.com/courses/2025/LAH.S101",
+			expected: domain.Lecture{
+				ID:             1,
+				University:     "東京科学大学",
+				Title:          "法学（憲法）Ａ",
+				Department:     "文系教養科目",
+				LectureType:    domain.LectureTypeOffline,
+				Code:           "LAH.S101",
+				Level:          domain.LevelBachelor1,
+				Credit:         1,
+				Year:           2025,
+				Language:       "日本語",
+				Url:            "https://example.com/courses/2025/LAH.S101",
+				Abstract:       "憲法の基本的人権",
+				Goal:           "基本的人権",
+				Experience:     "弁護士",
+				Flow:           "法律初学者を想定し",
+				OutOfClassWork: "学修効果",
+				Textbook:       "憲法（第八版）",
+				ReferenceBook:  "マンガ僕たちの日本国憲法",
+				Assessment:     "期末",
+				Prerequisite:   "歓迎します",
+				Contact:        "",
+				OfficeHours:    "",
+				Note:           "日本国憲法は",
+				Timetables: []domain.TimeTable{
+					{
+						LectureID: 1,
+						Semester:  domain.SemesterFall,
+						DayOfWeek: domain.DayOfWeekMonday,
+						Period:    domain.Period5,
+						Room: domain.Room{
+							Name: "S3-215(S321)",
+						},
+					},
+					{
+						LectureID: 1,
+						Semester:  domain.SemesterFall,
+						DayOfWeek: domain.DayOfWeekMonday,
+						Period:    domain.Period6,
+						Room: domain.Room{
+							Name: "S3-215(S321)",
+						},
+					},
+				},
+				Teachers: []domain.Teacher{
+					{
+						Name: "篠島 正幸",
+					},
+				},
+				LecturePlans: []domain.LecturePlan{
+					{
+						Count:      1,
+						Plan:       "講義ガイダンス",
+						Assignment: "社会における",
+					},
+					{
+						Count:      2,
+						Plan:       "憲法の基本理念",
+						Assignment: "憲法の条項",
+					},
+					{
+						Count:      3,
+						Plan:       "人権総論",
+						Assignment: "人権に関する",
+					},
+					{
+						Count:      4,
+						Plan:       "法の下の平等",
+						Assignment: "法の下の平等",
+					},
+					{
+						Count:      5,
+						Plan:       "精神的自由権",
+						Assignment: "表現の自由",
+					},
+					{
+						Count:      6,
+						Plan:       "経済的自由権",
+						Assignment: "社会経済",
+					},
+					{
+						Count:      7,
+						Plan:       "国務請求権",
+						Assignment: "各人権",
+					},
+					{
+						Count:      8,
+						Plan:       "総括と試験",
+						Assignment: "",
 					},
 				},
 				Keywords:       []string{"憲法", "法律", "人権", "教養"},
