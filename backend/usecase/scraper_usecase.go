@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 	"time"
 
@@ -106,6 +107,8 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 			continue
 		}
 		seen[detailURL] = struct{}{}
+
+		log.Printf("Scraping detail page: %s %s", item.Code, item.Title)
 
 		if !firstFetch {
 			if err := uc.sleep(ctx); err != nil {
