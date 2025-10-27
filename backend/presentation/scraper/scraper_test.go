@@ -66,7 +66,7 @@ func TestParseCourseDetail(t *testing.T) {
 		Level: domain.LevelBachelor1,
 		Credit: 1,
 		Year:       2025,
-		Language: "英語",
+		Language: "日本語",
 		Url: "https://example.com/courses/2025/LAH.S101",
 		Abstract: "憲法の基本的人権",
 		Goal: "基本的人権",
@@ -252,7 +252,7 @@ func TestParseCourseDetail(t *testing.T) {
 	for i, relatedCourse := range lecture.RelatedCourses {
 		expRelatedCourse := expected.RelatedCourses[i]
 		if relatedCourse != expRelatedCourse {
-			t.Errorf("unexpected related course at index %d: got %s, want %s", i, relatedCourse, expRelatedCourse)
+			t.Errorf("unexpected related course at index %d: got %d, want %d", i, relatedCourse, expRelatedCourse)
 		}
 	}	
 }

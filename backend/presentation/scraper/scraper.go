@@ -83,6 +83,7 @@ func ParseCourseDetail(r io.Reader, detailURL string) (*domain.Lecture, error) {
 	}
 
 	lecture := &domain.Lecture{Url: strings.TrimSpace(detailURL)}
+	lecture.University = "東京科学大学"
 
 	lecture.Title = strings.TrimSpace(doc.Find("h1.c-h1").First().Text())
 	lecture.Department = extractDefinition(doc, "開講元")
