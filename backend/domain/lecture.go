@@ -60,10 +60,29 @@ const (
 	LevelBachelor1 Level = 1
 	LevelBachelor2 Level = 2
 	LevelBachelor3 Level = 3
-	LevelMaster1   Level = 5
-	LevelMaster2   Level = 6
-	LevelDoctor    Level = 8
+	LevelMaster1   Level = 4
+	LevelMaster2   Level = 5
+	LevelDoctor    Level = 6
 )
+
+func FromLevel(level int) Level {
+	switch level {
+	case 1:	
+		return LevelBachelor1
+	case 2:
+		return LevelBachelor2	
+	case 3:
+		return LevelBachelor3	
+	case 4:	
+		return LevelMaster1
+	case 5:
+		return LevelMaster2	
+	case 6:
+		return LevelDoctor	
+	default:
+		return 0
+	}
+}
 
 type LecturePlan struct {
 	Count      int

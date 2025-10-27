@@ -306,18 +306,22 @@ func parseLevelFromCode(code string) domain.Level {
 	if digits == "" {
 		return 0
 	}
-	switch digits[0] {
-	case '1':
+	num, err := strconv.Atoi(digits)
+	if err != nil || num <= 0 {
+		return 0
+	}
+	switch {
+	case num >= 100 && num < 200:
 		return domain.LevelBachelor1
-	case '2':
+	case num >= 200 && num < 300:
 		return domain.LevelBachelor2
-	case '3', '4':
+	case num >= 300 && num < 400:
 		return domain.LevelBachelor3
-	case '5':
+	case num >= 400 && num < 500:
 		return domain.LevelMaster1
-	case '6':
+	case num >= 500 && num < 600:
 		return domain.LevelMaster2
-	case '8':
+	case num >= 600:
 		return domain.LevelDoctor
 	default:
 		return 0
