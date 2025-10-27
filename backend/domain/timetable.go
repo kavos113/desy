@@ -46,3 +46,11 @@ type Room struct {
 	ID   int
 	Name string
 }
+
+type TimeTableRepository interface {
+	FindByLectureID(lectureID int) ([]TimeTable, error)
+	Create(timetable *TimeTable) error
+	Creates(timetables []TimeTable) error
+	Update(timetable *TimeTable) error
+	Delete(lectureID int) error
+}
