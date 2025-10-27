@@ -32,6 +32,10 @@ const (
 	Period6 Period = 6
 	Period7 Period = 7
 	Period8 Period = 8
+	Period9 Period = 9	
+	Period10 Period = 10
+	Period11 Period = 11
+	Period12 Period = 12
 )
 
 type TimeTable struct {
