@@ -32,6 +32,18 @@ type Lecture struct {
 	RelatedCourses []int
 }
 
+type LectureSummary struct {
+	ID             int
+	University     string
+	Title          string
+	Department     string
+	Code           string
+	Level          Level
+	Year           int
+	Timetables     []TimeTable
+	Teachers       []Teacher
+}
+
 type LectureType string
 
 const (
@@ -71,7 +83,7 @@ type SearchQuery struct {
 
 type LectureRepository interface {
 	FindByID(id int) (*Lecture, error)
-	Search(query SearchQuery) ([]Lecture, error)
+	Search(query SearchQuery) ([]LectureSummary, error)
 	Create(lecture *Lecture) error
 	Creates(lectures []Lecture) error
 	Update(lecture *Lecture) error	
