@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -323,12 +324,59 @@ func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSu
 
 // Create stores a single lecture aggregate.
 func (r *LectureRepository) Create(lecture *domain.Lecture) error {
-	return ErrNotImplemented
+	if lecture == nil {
+		return errors.New("nil lecture")
+	}
+
+	copies := []domain.Lecture{*lecture}
+	if err := r.Creates(copies); err != nil {
+		return err
+	}
+
+	lecture.ID = copies[0].ID
+	lecture.Teachers = copies[0].Teachers
+	lecture.Timetables = copies[0].Timetables
+	lecture.LecturePlans = copies[0].LecturePlans
+	lecture.Keywords = copies[0].Keywords
+	lecture.RelatedCourses = copies[0].RelatedCourses
+
+	return nil
 }
 
 // Creates stores multiple lecture aggregates within a single transaction.
 func (r *LectureRepository) Creates(lectures []domain.Lecture) error {
-	return ErrNotImplemented
+	if len(lectures) == 0 {
+		return nil
+	}
+
+	ctx := context.Background()
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+
+	insertedIDs := make([]int, len(lectures))
+
+	for idx := range lectures {
+		id, err := r.insertLectureTx(tx, &lectures[idx])
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				return fmt.Errorf("rollback on insert lecture: %v (original error: %w)", rbErr, err)
+			}
+			return err
+		}
+		insertedIDs[idx] = id
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit lecture transaction: %w", err)
+	}
+
+	for idx := range lectures {
+		lectures[idx].ID = insertedIDs[idx]
+	}
+
+	return nil
 }
 
 // Update updates an existing lecture aggregate.
@@ -431,12 +479,19 @@ func (r *LectureRepository) fetchTeachersMap(lectureIDs []int) (map[int][]domain
 
 	for rows.Next() {
 		var (
-			lectureID int
-			teacher   domain.Teacher
+			lectureID   int
+			teacherID   int
+			teacherName string
+			urlValue    sql.NullString
 		)
 
-		if err := rows.Scan(&lectureID, &teacher.ID, &teacher.Name, &teacher.Url); err != nil {
+		if err := rows.Scan(&lectureID, &teacherID, &teacherName, &urlValue); err != nil {
 			return nil, fmt.Errorf("scan teacher: %w", err)
+		}
+
+		teacher := domain.Teacher{ID: teacherID, Name: teacherName}
+		if urlValue.Valid {
+			teacher.Url = urlValue.String
 		}
 
 		result[lectureID] = append(result[lectureID], teacher)
@@ -516,6 +571,287 @@ func (r *LectureRepository) fetchRelatedCourses(lectureID int) ([]int, error) {
 	}
 
 	return related, nil
+}
+
+func (r *LectureRepository) insertLectureTx(tx *sql.Tx, lecture *domain.Lecture) (int, error) {
+	if lecture == nil {
+		return 0, errors.New("nil lecture")
+	}
+	if strings.TrimSpace(lecture.University) == "" {
+		return 0, errors.New("lecture university is required")
+	}
+	if strings.TrimSpace(lecture.Title) == "" {
+		return 0, errors.New("lecture title is required")
+	}
+
+	const insertLecture = `INSERT INTO lectures (university, title, english_title, department, lecture_type, code, level, credit, year, language, url, abstract, goal, experience, flow, out_of_class_work, textbook, reference_book, assessment, prerequisite, contact, office_hours, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	result, err := tx.Exec(insertLecture,
+		strings.TrimSpace(lecture.University),
+		strings.TrimSpace(lecture.Title),
+		nullString(lecture.EnglishTitle),
+		nullString(lecture.Department),
+		nullString(string(lecture.LectureType)),
+		nullString(lecture.Code),
+		nullInt(int(lecture.Level)),
+		nullInt(lecture.Credit),
+		nullInt(lecture.Year),
+		nullString(lecture.Language),
+		nullString(lecture.Url),
+		nullString(lecture.Abstract),
+		nullString(lecture.Goal),
+		nullString(lecture.Experience),
+		nullString(lecture.Flow),
+		nullString(lecture.OutOfClassWork),
+		nullString(lecture.Textbook),
+		nullString(lecture.ReferenceBook),
+		nullString(lecture.Assessment),
+		nullString(lecture.Prerequisite),
+		nullString(lecture.Contact),
+		nullString(lecture.OfficeHours),
+		nullString(lecture.Note),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("insert lecture: %w", err)
+	}
+
+	lectureID64, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("last insert id: %w", err)
+	}
+	lectureID := int(lectureID64)
+
+	if err := r.insertTeachersTx(tx, lectureID, lecture); err != nil {
+		return 0, err
+	}
+	if err := r.insertTimetablesTx(tx, lectureID, lecture); err != nil {
+		return 0, err
+	}
+	if err := r.insertLecturePlansTx(tx, lectureID, lecture.LecturePlans); err != nil {
+		return 0, err
+	}
+	if err := r.insertKeywordsTx(tx, lectureID, lecture.Keywords); err != nil {
+		return 0, err
+	}
+	if err := r.insertRelatedCoursesTx(tx, lectureID, lecture.RelatedCourses); err != nil {
+		return 0, err
+	}
+
+	return lectureID, nil
+}
+
+func (r *LectureRepository) insertTeachersTx(tx *sql.Tx, lectureID int, lecture *domain.Lecture) error {
+	if len(lecture.Teachers) == 0 {
+		return nil
+	}
+
+	seenIDs := make(map[int]struct{})
+	seenNames := make(map[string]struct{})
+
+	for idx, teacher := range lecture.Teachers {
+		name := strings.TrimSpace(teacher.Name)
+		if name == "" {
+			continue
+		}
+
+		teacherID := teacher.ID
+		if teacherID > 0 {
+			if _, ok := seenIDs[teacherID]; ok {
+				continue
+			}
+			seenIDs[teacherID] = struct{}{}
+		} else {
+			key := strings.ToLower(name)
+			if _, ok := seenNames[key]; ok {
+				continue
+			}
+			seenNames[key] = struct{}{}
+
+			id, err := r.ensureTeacherTx(tx, name, teacher.Url)
+			if err != nil {
+				return err
+			}
+			teacherID = id
+			lecture.Teachers[idx].ID = id
+		}
+
+		if _, err := tx.Exec(`INSERT OR IGNORE INTO lecture_teachers (lecture_id, teacher_id) VALUES (?, ?)`, lectureID, teacherID); err != nil {
+			return fmt.Errorf("insert lecture teacher: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (r *LectureRepository) insertTimetablesTx(tx *sql.Tx, lectureID int, lecture *domain.Lecture) error {
+	if len(lecture.Timetables) == 0 {
+		return nil
+	}
+
+	for idx, timetable := range lecture.Timetables {
+		roomID := 0
+		if name := strings.TrimSpace(timetable.Room.Name); name != "" {
+			id, err := r.ensureRoomTx(tx, name)
+			if err != nil {
+				return err
+			}
+			roomID = id
+			lecture.Timetables[idx].Room.ID = id
+		}
+
+		if _, err := tx.Exec(`INSERT INTO timetables (lecture_id, semester, room_id, day_of_week, period) VALUES (?, ?, ?, ?, ?)`,
+			lectureID,
+			nullString(string(timetable.Semester)),
+			nullInt(roomID),
+			nullString(string(timetable.DayOfWeek)),
+			nullInt(int(timetable.Period)),
+		); err != nil {
+			return fmt.Errorf("insert timetable: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (r *LectureRepository) insertLecturePlansTx(tx *sql.Tx, lectureID int, plans []domain.LecturePlan) error {
+	if len(plans) == 0 {
+		return nil
+	}
+
+	for _, plan := range plans {
+		if _, err := tx.Exec(`INSERT INTO lecture_plans (lecture_id, count, plan, assignment) VALUES (?, ?, ?, ?)`,
+			lectureID,
+			nullInt(plan.Count),
+			nullString(plan.Plan),
+			nullString(plan.Assignment),
+		); err != nil {
+			return fmt.Errorf("insert lecture plan: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (r *LectureRepository) insertKeywordsTx(tx *sql.Tx, lectureID int, keywords []string) error {
+	if len(keywords) == 0 {
+		return nil
+	}
+
+	seen := make(map[string]struct{})
+	for _, keyword := range keywords {
+		clean := strings.TrimSpace(keyword)
+		if clean == "" {
+			continue
+		}
+		key := strings.ToLower(clean)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+
+		if _, err := tx.Exec(`INSERT OR IGNORE INTO lecture_keywords (lecture_id, keyword) VALUES (?, ?)`, lectureID, clean); err != nil {
+			return fmt.Errorf("insert keyword: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (r *LectureRepository) insertRelatedCoursesTx(tx *sql.Tx, lectureID int, related []int) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	seen := make(map[int]struct{})
+	for _, rel := range related {
+		if rel <= 0 {
+			continue
+		}
+		if _, ok := seen[rel]; ok {
+			continue
+		}
+		seen[rel] = struct{}{}
+		if _, err := tx.Exec(`INSERT OR IGNORE INTO related_courses (lecture_id, related_lecture_id) VALUES (?, ?)`, lectureID, rel); err != nil {
+			return fmt.Errorf("insert related course: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (r *LectureRepository) ensureTeacherTx(tx *sql.Tx, name, url string) (int, error) {
+	var id int
+	err := tx.QueryRow(`SELECT id FROM teachers WHERE name = ?`, name).Scan(&id)
+	if err == nil {
+		if strings.TrimSpace(url) != "" {
+			if _, err := tx.Exec(`UPDATE teachers SET url = ? WHERE id = ?`, url, id); err != nil {
+				return 0, fmt.Errorf("update teacher url: %w", err)
+			}
+		}
+		return id, nil
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return 0, fmt.Errorf("select teacher: %w", err)
+	}
+
+	result, err := tx.Exec(`INSERT INTO teachers (name, url) VALUES (?, ?)`, name, nullString(url))
+	if err != nil {
+		return 0, fmt.Errorf("insert teacher: %w", err)
+	}
+
+	teacherID, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("last insert teacher id: %w", err)
+	}
+
+	return int(teacherID), nil
+}
+
+func (r *LectureRepository) ensureRoomTx(tx *sql.Tx, name string) (int, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return 0, nil
+	}
+
+	var id int
+	err := tx.QueryRow(`SELECT id FROM rooms WHERE name = ?`, name).Scan(&id)
+	if err == nil {
+		return id, nil
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return 0, fmt.Errorf("select room: %w", err)
+	}
+
+	result, err := tx.Exec(`INSERT OR IGNORE INTO rooms (name) VALUES (?)`, name)
+	if err != nil {
+		return 0, fmt.Errorf("insert room: %w", err)
+	}
+
+	id64, err := result.LastInsertId()
+	if err == nil && id64 != 0 {
+		return int(id64), nil
+	}
+
+	err = tx.QueryRow(`SELECT id FROM rooms WHERE name = ?`, name).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("select ensured room: %w", err)
+	}
+
+	return id, nil
+}
+
+func nullString(value string) sql.NullString {
+	if strings.TrimSpace(value) == "" {
+		return sql.NullString{Valid: false}
+	}
+	return sql.NullString{String: value, Valid: true}
+}
+
+func nullInt(value int) sql.NullInt64 {
+	if value == 0 {
+		return sql.NullInt64{Valid: false}
+	}
+	return sql.NullInt64{Int64: int64(value), Valid: true}
 }
 
 func placeholders(count int) string {

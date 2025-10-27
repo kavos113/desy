@@ -2,9 +2,12 @@ package sqlite
 
 import (
 	"database/sql"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/kavos113/desy/backend/domain"
+	"github.com/kavos113/desy/backend/presentation/scraper"
 )
 
 const testDataSourceName = "file::memory:?cache=shared"
@@ -197,6 +200,42 @@ func TestLectureRepositorySearchReturnsEmptyWhenNoMatches(t *testing.T) {
 	}
 }
 
+func TestLectureRepositoryCreatePersistsAggregate(t *testing.T) {
+	repo, _ := newTestRepository(t)
+	lecture := parseDetailFixture(t, "course_detail.html")
+
+	if err := repo.Create(lecture); err != nil {
+		t.Fatalf("Create returned error: %v", err)
+	}
+	if lecture.ID == 0 {
+		t.Fatalf("expected ID to be assigned")
+	}
+
+	saved, err := repo.FindByID(lecture.ID)
+	if err != nil {
+		t.Fatalf("FindByID returned error: %v", err)
+	}
+	if saved == nil {
+		t.Fatalf("expected saved lecture")
+	}
+
+	if saved.Title != lecture.Title {
+		t.Fatalf("unexpected title: %s", saved.Title)
+	}
+	if len(saved.Teachers) != len(lecture.Teachers) {
+		t.Fatalf("unexpected teachers count: %d", len(saved.Teachers))
+	}
+	if len(saved.Timetables) != len(lecture.Timetables) {
+		t.Fatalf("unexpected timetables count: %d", len(saved.Timetables))
+	}
+	if len(saved.LecturePlans) == 0 {
+		t.Fatalf("expected lecture plans to be stored")
+	}
+	if len(saved.Keywords) == 0 {
+		t.Fatalf("expected keywords to be stored")
+	}
+}
+
 func newTestRepository(t *testing.T) (*LectureRepository, *sql.DB) {
 	t.Helper()
 
@@ -316,4 +355,21 @@ func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
 	if _, err := db.Exec(query, args...); err != nil {
 		t.Fatalf("exec failed: %v", err)
 	}
+}
+
+func parseDetailFixture(t *testing.T, name string) *domain.Lecture {
+	t.Helper()
+	path := filepath.Join("..", "..", "scraper", "fixture", name)
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("open fixture %s: %v", name, err)
+	}
+	defer file.Close()
+
+	lecture, err := scraper.ParseCourseDetail(file, "https://example.com/courses/2025/LAH.S101")
+	if err != nil {
+		t.Fatalf("parse course detail: %v", err)
+	}
+
+	return lecture
 }
