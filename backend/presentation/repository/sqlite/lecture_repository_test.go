@@ -19,6 +19,7 @@ func TestNewLectureRepositoryInitializesSchema(t *testing.T) {
 		"lectures",
 		"teachers",
 		"lecture_teachers",
+		"rooms",
 		"timetables",
 		"lecture_plans",
 		"lecture_keywords",
@@ -254,11 +255,12 @@ func seedLectureAggregate(t *testing.T, db *sql.DB) {
 	mustExec(t, db, `INSERT INTO teachers (id, name, url) VALUES (?, ?, ?)`, 1, "Dr. Alice", "https://example.com/teachers/1")
 	mustExec(t, db, `INSERT INTO lecture_teachers (lecture_id, teacher_id) VALUES (?, ?)`, 1, 1)
 
-	mustExec(t, db, `INSERT INTO timetables (lecture_id, semester, room_id, room_name, day_of_week, period) VALUES (?, ?, ?, ?, ?, ?)`,
+	mustExec(t, db, `INSERT INTO rooms (id, name) VALUES (?, ?)`, 101, "Room A")
+
+	mustExec(t, db, `INSERT INTO timetables (lecture_id, semester, room_id, day_of_week, period) VALUES (?, ?, ?, ?, ?)`,
 		1,
 		string(domain.SemesterSpring),
 		101,
-		"Room A",
 		string(domain.DayOfWeekMonday),
 		int(domain.Period1),
 	)

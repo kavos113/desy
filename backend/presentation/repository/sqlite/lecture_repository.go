@@ -358,7 +358,7 @@ func (r *LectureRepository) fetchTimetablesMap(lectureIDs []int) (map[int][]doma
 	}
 
 	ph := placeholders(len(lectureIDs))
-	query := fmt.Sprintf(`SELECT lecture_id, semester, room_id, room_name, day_of_week, period FROM timetables WHERE lecture_id IN (%s) ORDER BY lecture_id, semester, day_of_week, period`, ph)
+	query := fmt.Sprintf(`SELECT tt.lecture_id, tt.semester, tt.room_id, r.name, tt.day_of_week, tt.period FROM timetables tt LEFT JOIN rooms r ON r.id = tt.room_id WHERE tt.lecture_id IN (%s) ORDER BY tt.lecture_id, tt.semester, tt.day_of_week, tt.period`, ph)
 	args := make([]any, len(lectureIDs))
 	for index, id := range lectureIDs {
 		args[index] = id

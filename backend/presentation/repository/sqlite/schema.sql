@@ -39,15 +39,20 @@ CREATE TABLE IF NOT EXISTS lecture_teachers (
     FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS rooms (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
+);
+
 CREATE TABLE IF NOT EXISTS timetables (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     lecture_id INTEGER NOT NULL,
     semester TEXT,
     room_id INTEGER,
-    room_name TEXT,
     day_of_week TEXT,
     period INTEGER,
-    FOREIGN KEY (lecture_id) REFERENCES lectures(id) ON DELETE CASCADE
+    FOREIGN KEY (lecture_id) REFERENCES lectures(id) ON DELETE CASCADE,
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS lecture_plans (
