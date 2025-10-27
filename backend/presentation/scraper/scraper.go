@@ -105,6 +105,11 @@ func ParseCourseDetail(r io.Reader, detailURL string) (*domain.Lecture, error) {
 	lecture.ReferenceBook = extractSectionText(doc, "参考書、講義資料等")
 	lecture.Assessment = extractSectionText(doc, "成績評価の方法及び基準")
 	lecture.Prerequisite = extractSectionText(doc, "履修の条件・注意事項")
+	lecture.Contact = extractSectionText(doc, "連絡先 (メール、電話番号) ※”[at]”を”@”(半角)に変換してください。")
+	if lecture.Contact == "" {
+		lecture.Contact = extractSectionText(doc, "連絡先")
+	}
+	lecture.OfficeHours = extractSectionText(doc, "オフィスアワー")
 	lecture.Note = extractSectionText(doc, "その他")
 
 	lecture.Keywords = parseKeywords(extractSectionText(doc, "キーワード"))
