@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import CheckBoxes from "./CheckBoxes";
 import Timetable from "./Timetable";
 import { GRADE_LABELS, QUARTER_LABELS } from "../../constants";
@@ -10,20 +11,24 @@ type SearchConditionsProps = {
 };
 
 const SearchConditions = ({ onCheckItem, onTimetableChange }: SearchConditionsProps) => {
-  const handleCheck = (type: SearchCheckBox) => {
-    return (items: string[]) => {
-      onCheckItem?.(type, items);
-    };
-  };
+  const handleGradeCheck = useCallback(
+    (items: string[]) => {
+      onCheckItem?.("grade", items);
+    },
+    [onCheckItem]
+  );
+
+  const handleQuarterCheck = useCallback(
+    (items: string[]) => {
+      onCheckItem?.("quarter", items);
+    },
+    [onCheckItem]
+  );
 
   return (
     <div className="search-conditions-container">
-      <CheckBoxes checkboxId="grade" contents={GRADE_LABELS} onCheckItem={handleCheck("grade")} />
-      <CheckBoxes
-        checkboxId="quarter"
-        contents={QUARTER_LABELS}
-        onCheckItem={handleCheck("quarter")}
-      />
+      <CheckBoxes checkboxId="grade" contents={GRADE_LABELS} onCheckItem={handleGradeCheck} />
+      <CheckBoxes checkboxId="quarter" contents={QUARTER_LABELS} onCheckItem={handleQuarterCheck} />
       <Timetable onCheckItem={onTimetableChange} />
     </div>
   );

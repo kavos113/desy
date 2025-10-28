@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import ComboBox from "../common/ComboBox";
 import SearchBox from "../common/SearchBox";
 import {
@@ -19,9 +19,21 @@ const SearchBoxes = ({ onClickMenuItem, onChangeSearchBox }: SearchBoxesProps) =
   const [title, setTitle] = useState("");
   const [lecturer, setLecturer] = useState("");
 
-  useEffect(() => {
-    onChangeSearchBox?.(title, lecturer);
-  }, [lecturer, onChangeSearchBox, title]);
+  const handleTitleChange = useCallback(
+    (value: string) => {
+      setTitle(value);
+      onChangeSearchBox?.(value, lecturer);
+    },
+    [lecturer, onChangeSearchBox]
+  );
+
+  const handleLecturerChange = useCallback(
+    (value: string) => {
+      setLecturer(value);
+      onChangeSearchBox?.(title, value);
+    },
+    [onChangeSearchBox, title]
+  );
 
   const handleSelect = (key: SearchComboBox) => {
     return (items: string[]) => {
@@ -44,16 +56,8 @@ const SearchBoxes = ({ onClickMenuItem, onChangeSearchBox }: SearchBoxesProps) =
         onSelectItem={handleSelect("department")}
       />
       <ComboBox items={YEARS_MENU} onSelectItem={handleSelect("year")} />
-      <SearchBox
-        placeholder="講義名"
-        value={title}
-        onChange={setTitle}
-      />
-      <SearchBox
-        placeholder="教員名"
-        value={lecturer}
-        onChange={setLecturer}
-      />
+      <SearchBox placeholder="講義名" value={title} onChange={handleTitleChange} />
+      <SearchBox placeholder="教員名" value={lecturer} onChange={handleLecturerChange} />
     </div>
   );
 };

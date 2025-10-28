@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import SearchBoxes from "./SearchBoxes";
 import SearchConditions from "./SearchConditions";
 import type {
@@ -13,18 +14,27 @@ type SearchFieldProps = {
 };
 
 const SearchField = ({ onClickMenuItem, onTimetableChange }: SearchFieldProps) => {
-  const handleSearchBoxChange = (title: string, lecturer: string) => {
-    onClickMenuItem?.("title", title ? [title] : []);
-    onClickMenuItem?.("lecturer", lecturer ? [lecturer] : []);
-  };
+  const handleSearchBoxChange = useCallback(
+    (title: string, lecturer: string) => {
+      onClickMenuItem?.("title", title ? [title] : []);
+      onClickMenuItem?.("lecturer", lecturer ? [lecturer] : []);
+    },
+    [onClickMenuItem]
+  );
 
-  const handleClickMenuItem = (key: SearchComboBox, items: string[]) => {
-    onClickMenuItem?.(key, items);
-  };
+  const handleClickMenuItem = useCallback(
+    (key: SearchComboBox, items: string[]) => {
+      onClickMenuItem?.(key, items);
+    },
+    [onClickMenuItem]
+  );
 
-  const handleConditionChange = (key: SearchConditionKey, items: string[]) => {
-    onClickMenuItem?.(key, items);
-  };
+  const handleConditionChange = useCallback(
+    (key: SearchConditionKey, items: string[]) => {
+      onClickMenuItem?.(key, items);
+    },
+    [onClickMenuItem]
+  );
 
   return (
     <div className="search-container">

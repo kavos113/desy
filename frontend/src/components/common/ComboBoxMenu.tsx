@@ -46,11 +46,11 @@ const ComboBoxMenu = ({
   if (isMenuLeaf(items)) {
     return (
       <ul className={containerClassName}>
-        {items.map((item) => {
+        {items.map((item, index) => {
           const checked = selectedKeys.has(item);
           return (
             <li
-              key={item}
+              key={`${item}-${index}`}
               className={`menuItem ${checked ? "check" : "notCheck"}`}
               onClick={() => onSelect(item)}
             >
