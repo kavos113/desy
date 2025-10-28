@@ -5,3 +5,5 @@ front_legacy
 backend/presentation/scraper/fixture
 .github/*.md
 *.db
+*storybook.log
+storybook-static
