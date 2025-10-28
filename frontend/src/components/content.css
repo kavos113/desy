@@ -6,16 +6,24 @@
   gap: 20px;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: 1fr;
+  overflow: hidden;
 }
 
 .search-panel {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
+  height: 100%;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .table-panel {
   grid-column: 2 / 4;
   grid-row: 1 / 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .search-menu {
@@ -40,6 +48,7 @@
     transform: translateX(-110%);
     transition: transform 0.3s;
     z-index: 5;
+    height: calc(100% - 74px);
   }
 
   .search-panel.search-visible {
@@ -48,5 +57,6 @@
 
   .table-panel {
     width: 100%;
+    height: auto;
   }
 }
