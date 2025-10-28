@@ -1,4 +1,4 @@
-import "./button.css"
+import "./common.css"
 
 type SimpleButtonProps = {
   text: string;
