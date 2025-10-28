@@ -70,6 +70,21 @@ func (a *App) Scrape() error {
 	return err
 }
 
+func (a *App) ScrapeTest() error {
+	const testURL = "https://syllabus.s.isct.ac.jp/courses/2025/4/0-904-340000-120900-20927"
+	if a.scraperUsecase == nil {
+		return fmt.Errorf("scraper usecase is not configured")
+	}
+
+	ctx := a.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	_, err := a.scraperUsecase.ScrapeCourseListAndSave(ctx, testURL, scraper.TopPageURL)
+	return err
+}
+
 func (a *App) SearchLectures(query domain.SearchQuery) ([]domain.LectureSummary, error) {
 	if a.lectureUsecase == nil {
 		return nil, fmt.Errorf("lecture usecase is not configured")

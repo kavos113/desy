@@ -14,6 +14,10 @@ export function Scrape() {
   return window['go']['main']['App']['Scrape']();
 }
 
+export function ScrapeTest() {
+  return window['go']['main']['App']['ScrapeTest']();
+}
+
 export function SearchLectures(arg1) {
   return window['go']['main']['App']['SearchLectures'](arg1);
 }

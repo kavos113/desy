@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import SimpleButton from "../common/SimpleButton";
 import "./search.css";
-import { Greet, Scrape } from "../../../wailsjs/go/main/App";
+import { Greet, Scrape, ScrapeTest } from "../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../wailsjs/runtime/runtime";
 
 const DEFAULT_STATUS = "Not fetched";
@@ -48,6 +48,20 @@ const FetchButton = () => {
     }
   }, []);
 
+  const handleFetchTest = useCallback(async () => {
+    setIsFetching(true);
+    setStatus("Fetch-Test...");
+    try {
+      await ScrapeTest();
+      setStatus("Fetch-Test Completed");
+    } catch (error) {
+      console.error("Scrape failed", error);
+      setStatus("Fetch-Test failed");
+    } finally {
+      setIsFetching(false);
+    }
+  }, []);
+
   const handleGreeting = useCallback(async () => {
     try {
       const message = await Greet("Fetch-Test");
@@ -62,7 +76,7 @@ const FetchButton = () => {
     <div>
       <div className="button-wrapper">
         <SimpleButton text="Fetch" onClick={handleFetch} disabled={isFetching} />
-        <SimpleButton text="Fetch-Test" onClick={handleGreeting} />
+        <SimpleButton text="Fetch-Test" onClick={handleFetchTest} />
       </div>
       <div>
         <p className="fetch-status">{status}</p>

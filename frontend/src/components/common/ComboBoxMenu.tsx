@@ -88,7 +88,7 @@ const ComboBoxMenu = ({
             >
               <span className="menuText">{key}</span>
               {checked ? "\u2713" : ""}
-              {isMenuNode(value) ? <span className="arrow">\u25B6</span> : null}
+              {isMenuNode(value) ? <span className="arrow">▶</span> : null}
             </button>
             {isMenuNode(value) ? (
               <ComboBoxMenu

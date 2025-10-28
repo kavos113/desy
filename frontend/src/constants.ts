@@ -1,4 +1,4 @@
-import type { Menu } from "./common/Menu";
+import type { Menu } from "./components/common/Menu";
 
 const RAW_DEPARTMENTS = [
   "理学院",
