@@ -11,6 +11,7 @@ type Parser interface {
 	ParseCourseList(r io.Reader, base string) ([]CourseListItem, error)
 	ParseCourseDetail(r io.Reader, detailURL string) (*domain.Lecture, error)
 	ListCoursesPagesURL(r io.Reader, year int) ([]string, error)
+	AddEnglishTitle(r io.Reader, lecture *domain.Lecture) error
 }
 
 // NewParser returns the default parser implementation.
@@ -30,4 +31,8 @@ func (htmlParser) ParseCourseDetail(r io.Reader, detailURL string) (*domain.Lect
 
 func (htmlParser) ListCoursesPagesURL(r io.Reader, year int) ([]string, error) {
 	return ListCoursesPagesURL(r, year)
+}
+
+func (htmlParser) AddEnglishTitle(r io.Reader, lecture *domain.Lecture) error {
+	return AddEnglishTitle(r, lecture)
 }

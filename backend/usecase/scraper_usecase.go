@@ -165,6 +165,20 @@ func (uc *scraperUsecase) ScrapeCourseDetail(ctx context.Context, detailURL stri
 		return nil, err
 	}
 
+	time.Sleep(1 * time.Second)
+
+	// english title
+	englishURL := fmt.Sprintf("%s?hl=en", detailURL)
+	engReader, err := uc.fetcher.Fetch(ctx, englishURL)
+	if err != nil {
+		log.Printf("fetch english title %s: %v", englishURL, err)
+	} else {
+		defer engReader.Close()
+		if err := uc.parser.AddEnglishTitle(engReader, lecture); err != nil {
+			log.Printf("add english title from %s: %v", englishURL, err)
+		}
+	}
+
 	return lecture, nil
 }
 

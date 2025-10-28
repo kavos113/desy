@@ -120,6 +120,23 @@ func ParseCourseDetail(r io.Reader, detailURL string) (*domain.Lecture, error) {
 	return lecture, nil
 }
 
+func AddEnglishTitle(r io.Reader, lecture *domain.Lecture) error {
+	if r == nil {
+		return fmt.Errorf("nil reader provided")
+	}
+	if lecture == nil {
+		return fmt.Errorf("nil lecture provided")
+	}
+
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return fmt.Errorf("parse course detail html for english title: %w", err)
+	}
+
+	lecture.EnglishTitle = strings.TrimSpace(doc.Find("h1.c-h1").First().Text())
+	return nil
+}
+
 func extractDefinition(doc *goquery.Document, term string) string {
 	sel := extractDefinitionSelection(doc, term)
 	if sel == nil || sel.Length() == 0 {
