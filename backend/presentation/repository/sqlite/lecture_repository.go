@@ -186,6 +186,11 @@ func (r *LectureRepository) FindByID(id int) (*domain.Lecture, error) {
 		return nil, err
 	}
 	lecture.RelatedCourses = related
+	codes, err := r.fetchRelatedCourseCodes(lecture.ID)
+	if err != nil {
+		return nil, err
+	}
+	lecture.RelatedCourseCodes = codes
 
 	return &lecture, nil
 }
@@ -348,6 +353,10 @@ func (r *LectureRepository) Create(lecture *domain.Lecture) error {
 func (r *LectureRepository) Creates(lectures []domain.Lecture) error {
 	if len(lectures) == 0 {
 		return nil
+	}
+
+	for idx := range lectures {
+		lectures[idx].RelatedCourseCodes = sanitizeRelatedCourseCodes(lectures[idx].RelatedCourseCodes)
 	}
 
 	ctx := context.Background()
@@ -605,6 +614,33 @@ func (r *LectureRepository) fetchKeywords(lectureID int) ([]string, error) {
 	return keywords, nil
 }
 
+func (r *LectureRepository) fetchRelatedCourseCodes(lectureID int) ([]string, error) {
+	rows, err := r.db.Query(`SELECT code FROM related_course_codes WHERE lecture_id = ? ORDER BY code`, lectureID)
+	if err != nil {
+		return nil, fmt.Errorf("select related course codes: %w", err)
+	}
+	defer rows.Close()
+
+	codes := make([]string, 0)
+	for rows.Next() {
+		var code string
+		if err := rows.Scan(&code); err != nil {
+			return nil, fmt.Errorf("scan related course code: %w", err)
+		}
+		codes = append(codes, code)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate related course codes: %w", err)
+	}
+
+	if len(codes) == 0 {
+		return nil, nil
+	}
+
+	return codes, nil
+}
+
 func (r *LectureRepository) fetchRelatedCourses(lectureID int) ([]int, error) {
 	rows, err := r.db.Query(`SELECT related_lecture_id FROM related_courses WHERE lecture_id = ? ORDER BY related_lecture_id`, lectureID)
 	if err != nil {
@@ -686,6 +722,9 @@ func (r *LectureRepository) insertLectureTx(tx *sql.Tx, lecture *domain.Lecture)
 		return 0, err
 	}
 	if err := r.insertKeywordsTx(tx, lectureID, lecture.Keywords); err != nil {
+		return 0, err
+	}
+	if err := r.insertRelatedCourseCodesTx(tx, lectureID, lecture.RelatedCourseCodes); err != nil {
 		return 0, err
 	}
 
@@ -778,6 +817,30 @@ func (r *LectureRepository) insertLecturePlansTx(tx *sql.Tx, lectureID int, plan
 			nullString(plan.Assignment),
 		); err != nil {
 			return fmt.Errorf("insert lecture plan: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (r *LectureRepository) insertRelatedCourseCodesTx(tx *sql.Tx, lectureID int, codes []string) error {
+	if _, err := tx.Exec(`DELETE FROM related_course_codes WHERE lecture_id = ?`, lectureID); err != nil {
+		return fmt.Errorf("delete related course codes: %w", err)
+	}
+
+	if len(codes) == 0 {
+		return nil
+	}
+
+	stmt, err := tx.Prepare(`INSERT INTO related_course_codes (lecture_id, code) VALUES (?, ?)`)
+	if err != nil {
+		return fmt.Errorf("prepare insert related course code: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, code := range codes {
+		if _, err := stmt.Exec(lectureID, code); err != nil {
+			return fmt.Errorf("insert related course code: %w", err)
 		}
 	}
 
@@ -904,6 +967,36 @@ func resolveRelatedCourseIDs(codes []string, mapping map[string]int, selfID int)
 
 func normalizeCourseCode(code string) string {
 	return strings.ToUpper(strings.TrimSpace(code))
+}
+
+func sanitizeRelatedCourseCodes(codes []string) []string {
+	if len(codes) == 0 {
+		return nil
+	}
+
+	result := make([]string, 0, len(codes))
+	seen := make(map[string]struct{})
+	for _, code := range codes {
+		trimmed := strings.TrimSpace(code)
+		if trimmed == "" {
+			continue
+		}
+		normalized := normalizeCourseCode(trimmed)
+		if normalized == "" {
+			continue
+		}
+		if _, ok := seen[normalized]; ok {
+			continue
+		}
+		seen[normalized] = struct{}{}
+		result = append(result, trimmed)
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+
+	return result
 }
 
 func (r *LectureRepository) ensureTeacherTx(tx *sql.Tx, name, url string) (int, error) {

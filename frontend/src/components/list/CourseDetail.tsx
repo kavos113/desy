@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { domain } from "../../../wailsjs/go/models";
 import { formatSemesters, formatTeachers, formatTimetables, splitIntoLines } from "./utils";
 import "./list.css";
@@ -16,6 +16,25 @@ export type RelatedCourseEntry = {
 };
 
 const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: CourseDetailProps) => {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) {
+      return;
+    }
+
+    wrapper.scrollTop = 0;
+
+    const scrollContainer = wrapper.closest(".detail-panel") as HTMLElement | null;
+    if (scrollContainer) {
+      if (typeof scrollContainer.scrollTo === "function") {
+        scrollContainer.scrollTo({ top: 0, behavior: "auto" });
+      } else {
+        scrollContainer.scrollTop = 0;
+      }
+    }
+  }, [lecture?.ID]);
   const teachers = useMemo(() => lecture?.Teachers ?? [], [lecture?.Teachers]);
   const teacherAnchors = teachers.map((teacher) => (
     <a key={teacher.ID} href={teacher.Url ?? undefined} className="lecturerText">
@@ -90,7 +109,7 @@ const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: C
   }
 
   return (
-    <div className="course-detail-wrapper">
+    <div className="course-detail-wrapper" ref={wrapperRef}>
       <div className="course-detail-title">
         <p className="course-title-ja">{lecture.Title}</p>
         <p className="course-title-en">{lecture.EnglishTitle}</p>

@@ -27,6 +27,7 @@ func TestNewLectureRepositoryInitializesSchema(t *testing.T) {
 		"lecture_plans",
 		"lecture_keywords",
 		"related_courses",
+		"related_course_codes",
 	}
 
 	for _, table := range tables {
@@ -129,6 +130,9 @@ func TestLectureRepositoryFindByIDReturnsAggregate(t *testing.T) {
 
 	if len(lecture.RelatedCourses) != 1 || lecture.RelatedCourses[0] != 2 {
 		t.Fatalf("unexpected related courses: %#v", lecture.RelatedCourses)
+	}
+	if len(lecture.RelatedCourseCodes) != 1 || lecture.RelatedCourseCodes[0] != "CS102" {
+		t.Fatalf("unexpected related course codes: %#v", lecture.RelatedCourseCodes)
 	}
 }
 
@@ -234,6 +238,9 @@ func TestLectureRepositoryCreatePersistsAggregate(t *testing.T) {
 	if len(saved.Keywords) == 0 {
 		t.Fatalf("expected keywords to be stored")
 	}
+	if len(saved.RelatedCourseCodes) == 0 {
+		t.Fatalf("expected related course codes to be stored")
+	}
 }
 
 func TestLectureRepositoryCreateResolvesRelatedCourses(t *testing.T) {
@@ -261,6 +268,9 @@ func TestLectureRepositoryCreateResolvesRelatedCourses(t *testing.T) {
 	}
 	if saved.RelatedCourses[0] != 100 {
 		t.Fatalf("unexpected related course id: %#v", saved.RelatedCourses)
+	}
+	if len(saved.RelatedCourseCodes) == 0 {
+		t.Fatalf("expected related course codes to be stored")
 	}
 }
 
@@ -338,6 +348,7 @@ func seedLectureAggregate(t *testing.T, db *sql.DB) {
 	mustExec(t, db, `INSERT INTO lecture_keywords (lecture_id, keyword) VALUES (?, ?)`, 1, "data-science")
 
 	mustExec(t, db, `INSERT INTO related_courses (lecture_id, related_lecture_id) VALUES (?, ?)`, 1, 2)
+	mustExec(t, db, `INSERT INTO related_course_codes (lecture_id, code) VALUES (?, ?)`, 1, "CS102")
 }
 
 func seedSearchData(t *testing.T, db *sql.DB) {

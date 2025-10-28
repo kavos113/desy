@@ -78,3 +78,10 @@ CREATE TABLE IF NOT EXISTS related_courses (
     FOREIGN KEY (lecture_id) REFERENCES lectures(id) ON DELETE CASCADE,
     FOREIGN KEY (related_lecture_id) REFERENCES lectures(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS related_course_codes (
+    lecture_id INTEGER NOT NULL,
+    code TEXT NOT NULL,
+    PRIMARY KEY (lecture_id, code),
+    FOREIGN KEY (lecture_id) REFERENCES lectures(id) ON DELETE CASCADE
+);
