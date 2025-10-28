@@ -57,30 +57,41 @@
   gap: 16px;
 }
 
-.search-box-row select,
-.search-box-row input,
-.search-box-row textarea {
-  min-width: 180px;
-  flex: 1 1 180px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 0.95rem;
+.search-box-row .combobox-box-container,
+.search-box-row .search-box-container {
+  flex: 1 1 220px;
+  max-width: 100%;
 }
 
-.search-box-row select:focus,
-.search-box-row input:focus,
-.search-box-row textarea:focus {
-  outline: none;
+.search-box-row .combobox-box-container {
+  max-width: 270px;
+}
+
+.search-box-row .search-box-container {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  border-radius: 8px;
+  background: var(--white);
+}
+
+.search-box-row.search-box-row--inputs .search-box-container {
+  max-width: 352px;
+}
+
+.search-box-row .search-box-container:focus-within {
   border-color: #0b7285;
   box-shadow: 0 0 0 3px rgba(11, 114, 133, 0.15);
 }
 
-.search-box-select.desktop {
+.search-box-row .search-box-container .search-box-input {
+  width: 100%;
+}
+
+.search-box-row .combobox-box-container.desktop {
   display: block;
 }
 
-.search-box-select.mobile {
+.search-box-row .combobox-box-container.mobile {
   display: none;
 }
 
@@ -90,10 +101,13 @@
   gap: 8px 16px;
 }
 
-.check-boxes-container label {
-  display: flex;
-  align-items: center;
+.check-boxes-container .check-box-container {
+  width: auto;
+  height: 100%;
   gap: 8px;
+}
+
+.check-boxes-container .check-box-container .check-box-label {
   font-size: 0.9rem;
   color: #1f2937;
 }
@@ -144,45 +158,62 @@
   color: #0f172a;
 }
 
-.button {
+.search-actions .simple-button,
+.fetch-buttons .simple-button {
   min-width: 120px;
-  border: none;
   border-radius: 999px;
   padding: 10px 16px;
-  font-weight: 600;
+  border: none;
+  background: var(--background);
+  box-shadow: none;
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.button.primary {
+.search-actions .simple-button .simple-button-text,
+.fetch-buttons .simple-button .simple-button-text {
+  width: auto;
+  height: auto;
+  font-weight: 600;
+  color: inherit;
+}
+
+.search-actions .simple-button.primary,
+.fetch-buttons .simple-button.primary {
   background: linear-gradient(135deg, #0b7285, #219ebc);
   color: #ffffff;
   box-shadow: 0 12px 30px -15px rgba(13, 148, 136, 0.7);
 }
 
-.button.secondary {
+.search-actions .simple-button.secondary,
+.fetch-buttons .simple-button.secondary {
   background: linear-gradient(135deg, #f97316, #f59e0b);
   color: #ffffff;
   box-shadow: 0 12px 30px -15px rgba(249, 115, 22, 0.7);
 }
 
-.button.ghost {
+.search-actions .simple-button.ghost,
+.fetch-buttons .simple-button.ghost {
   background: #e2e8f0;
+  border: 1px solid #e2e8f0;
   color: #1f2937;
 }
 
-.back {
+.search-actions .simple-button.back,
+.fetch-buttons .simple-button.back {
   display: none;
 }
 
-.button:disabled {
+.search-actions .simple-button:disabled,
+.fetch-buttons .simple-button:disabled {
   opacity: 0.65;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-.button:not(:disabled):hover {
+.search-actions .simple-button:not(:disabled):hover,
+.fetch-buttons .simple-button:not(:disabled):hover {
   transform: translateY(-1px);
 }
 
@@ -209,17 +240,17 @@
     display: none;
   }
 
-  .back {
+  .search-actions .simple-button.back {
     display: inline-flex;
     align-items: center;
     justify-content: center;
   }
 
-  .search-box-select.desktop {
+  .search-box-row .combobox-box-container.desktop {
     display: none;
   }
 
-  .search-box-select.mobile {
+  .search-box-row .combobox-box-container.mobile {
     display: block;
   }
 }

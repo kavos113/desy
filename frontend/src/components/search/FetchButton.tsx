@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./search.css";
 import { Greet, Scrape } from "../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../wailsjs/runtime/runtime";
+import { SimpleButton } from "../common";
 
 type FetchButtonProps = {
   className?: string;
@@ -70,12 +71,18 @@ const FetchButton = ({ className }: FetchButtonProps) => {
   return (
     <div className={["fetch-panel", className].filter(Boolean).join(" ")}>
       <div className="fetch-buttons">
-        <button type="button" className="button secondary" onClick={handleScrape} disabled={loading}>
-          {loading ? "Fetching..." : "Fetch"}
-        </button>
-        <button type="button" className="button ghost" onClick={handleTest} disabled={testing}>
-          {testing ? "Testing..." : "Fetch-Test"}
-        </button>
+        <SimpleButton
+          text={loading ? "Fetching..." : "Fetch"}
+          className="secondary"
+          onClick={handleScrape}
+          disabled={loading}
+        />
+        <SimpleButton
+          text={testing ? "Testing..." : "Fetch-Test"}
+          className="ghost"
+          onClick={handleTest}
+          disabled={testing}
+        />
       </div>
       <p className="search-summary">{status}</p>
     </div>

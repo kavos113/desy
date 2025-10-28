@@ -1,5 +1,5 @@
 export interface MenuRecord {
-	[key: string]: Menu;
+  [key: string]: Menu;
 }
 
 export type Menu = string[] | MenuRecord;

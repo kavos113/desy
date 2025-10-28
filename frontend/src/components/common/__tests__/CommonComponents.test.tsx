@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import CheckBox from "../CheckBox";
@@ -14,10 +14,14 @@ describe("CheckBox", () => {
     render(<CheckBox checkboxId="grade-1" content="学士1年" onCheckItem={handleCheckItem} />);
 
     const checkbox = screen.getByRole("checkbox");
-    await user.click(checkbox);
+    await act(async () => {
+      await user.click(checkbox);
+    });
     expect(handleCheckItem).toHaveBeenLastCalledWith(1, true);
 
-    await user.click(checkbox);
+    await act(async () => {
+      await user.click(checkbox);
+    });
     expect(handleCheckItem).toHaveBeenLastCalledWith(1, false);
   });
 });

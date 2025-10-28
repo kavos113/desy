@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import "./search.css";
 import FetchButton from "./FetchButton";
 import SearchField from "./SearchField";
+import { SimpleButton } from "../common";
 import {
   Day,
   Period,
@@ -164,16 +165,21 @@ const Search = ({ className, onSearch, onBack, onSearchStart, onSearchError, sea
       <FetchButton className="fetch" />
       <SearchField onConditionChange={handleConditionChange} onTimetableChange={handleTimetableChange} />
       <div className="search-actions">
-        <button type="button" className="button primary" onClick={handleSearch} disabled={searching}>
-          {searching ? "Searching..." : "Search"}
-        </button>
+        <SimpleButton
+          text={searching ? "Searching..." : "Search"}
+          className="primary"
+          onClick={handleSearch}
+          disabled={searching}
+        />
         {error && <p className="search-summary" role="alert">{error}</p>}
         <p className="search-summary">大学: {universitySummary || "未選択"}</p>
         <p className="search-summary">開講: {departmentSummary || "未選択"}</p>
         <p className="search-summary">年度: {yearSummary || "未選択"}</p>
-        <button type="button" className="button ghost back" onClick={() => onBack?.()}>
-          戻る
-        </button>
+        <SimpleButton
+          text="戻る"
+          className="ghost back"
+          onClick={() => onBack?.()}
+        />
       </div>
     </div>
   );

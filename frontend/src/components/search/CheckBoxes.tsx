@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { CheckBox as CommonCheckBox } from "../common";
 import "./search.css";
 
 type CheckBoxesProps = {
@@ -30,11 +31,14 @@ const CheckBoxes = ({ idPrefix, contents, selectedItems = [], onChange }: CheckB
     onChange?.(selected);
   }, [onChange, selected]);
 
-  const toggle = (item: string) => {
-    setChecked((prev) => ({
-      ...prev,
-      [item]: !prev[item],
-    }));
+  const toggle = (item: string, value?: boolean) => {
+    setChecked((prev) => {
+      const nextValue = typeof value === "boolean" ? value : !prev[item];
+      return {
+        ...prev,
+        [item]: nextValue,
+      };
+    });
   };
 
   return (
@@ -42,15 +46,13 @@ const CheckBoxes = ({ idPrefix, contents, selectedItems = [], onChange }: CheckB
       {contents.map((item, index) => {
         const elementId = `${idPrefix}-${index}`;
         return (
-          <label htmlFor={elementId} key={elementId}>
-            <input
-              id={elementId}
-              type="checkbox"
-              checked={Boolean(checked[item])}
-              onChange={() => toggle(item)}
-            />
-            <span>{item}</span>
-          </label>
+          <CommonCheckBox
+            key={elementId}
+            checkboxId={elementId}
+            content={item}
+            checked={Boolean(checked[item])}
+            onChange={(value) => toggle(item, value)}
+          />
         );
       })}
     </div>
