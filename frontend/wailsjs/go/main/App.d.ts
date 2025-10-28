@@ -6,6 +6,8 @@ export function GetLectureDetails(arg1:number):Promise<domain.Lecture>;
 
 export function Greet(arg1:string):Promise<string>;
 
+export function MigrateRelatedCourses():Promise<number>;
+
 export function Scrape():Promise<void>;
 
 export function ScrapeTest():Promise<void>;

@@ -90,6 +90,19 @@ func (a *App) ScrapeTest() error {
 	return err
 }
 
+func (a *App) MigrateRelatedCourses() (int, error) {
+	if a.lectureUsecase == nil {
+		return 0, fmt.Errorf("lecture usecase is not configured")
+	}
+
+	ctx := a.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	return a.lectureUsecase.MigrateRelatedCourses(ctx)
+}
+
 func (a *App) SearchLectures(query domain.SearchQuery) ([]domain.LectureSummary, error) {
 	if a.lectureUsecase == nil {
 		return nil, fmt.Errorf("lecture usecase is not configured")

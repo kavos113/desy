@@ -1,5 +1,7 @@
 package domain
 
+import "context"
+
 type Lecture struct {
 	ID                 int
 	University         string
@@ -108,4 +110,5 @@ type LectureRepository interface {
 	Creates(lectures []Lecture) error
 	Update(lecture *Lecture) error
 	Delete(id int) error
+	MigrateRelatedCourses(ctx context.Context) (int, error)
 }

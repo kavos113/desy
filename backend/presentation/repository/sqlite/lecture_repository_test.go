@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"path/filepath"
@@ -271,6 +272,67 @@ func TestLectureRepositoryCreateResolvesRelatedCourses(t *testing.T) {
 	}
 	if len(saved.RelatedCourseCodes) == 0 {
 		t.Fatalf("expected related course codes to be stored")
+	}
+}
+
+func TestLectureRepositoryMigrateRelatedCourses(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code) VALUES (?, ?, ?, ?)`, 1, "Test University", "Course A", "AAA100")
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code) VALUES (?, ?, ?, ?)`, 2, "Test University", "Course B", "AAA200")
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code) VALUES (?, ?, ?, ?)`, 3, "Test University", "Course C", "AAA300")
+
+	mustExec(t, db, `INSERT INTO related_courses (lecture_id, related_lecture_id) VALUES (?, ?)`, 1, 2)
+
+	codes := []struct {
+		lectureID int
+		code      string
+	}{
+		{lectureID: 1, code: "AAA200"},
+		{lectureID: 1, code: "AAA300"},
+		{lectureID: 2, code: "AAA300"},
+		{lectureID: 3, code: "AAA999"}, // no matching lecture
+		{lectureID: 3, code: "aaa100"},
+	}
+
+	for _, entry := range codes {
+		mustExec(t, db, `INSERT INTO related_course_codes (lecture_id, code) VALUES (?, ?)`, entry.lectureID, entry.code)
+	}
+
+	inserted, err := repo.MigrateRelatedCourses(context.Background())
+	if err != nil {
+		t.Fatalf("MigrateRelatedCourses returned error: %v", err)
+	}
+	if inserted != 3 {
+		t.Fatalf("expected 3 new relations, got %d", inserted)
+	}
+
+	rows, err := db.Query(`SELECT lecture_id, related_lecture_id FROM related_courses ORDER BY lecture_id, related_lecture_id`)
+	if err != nil {
+		t.Fatalf("select related courses: %v", err)
+	}
+	defer rows.Close()
+
+	var relations [][2]int
+	for rows.Next() {
+		var src, dst int
+		if err := rows.Scan(&src, &dst); err != nil {
+			t.Fatalf("scan relation: %v", err)
+		}
+		relations = append(relations, [2]int{src, dst})
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("iterate relations: %v", err)
+	}
+
+	expected := [][2]int{{1, 2}, {1, 3}, {2, 3}, {3, 1}}
+	if len(relations) != len(expected) {
+		t.Fatalf("unexpected relation count: got %d want %d", len(relations), len(expected))
+	}
+	for idx, pair := range expected {
+		if relations[idx] != pair {
+			t.Fatalf("unexpected relation at %d: got %v want %v", idx, relations[idx], pair)
+		}
 	}
 }
 

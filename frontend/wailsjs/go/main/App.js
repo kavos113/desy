@@ -10,6 +10,10 @@ export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
 
+export function MigrateRelatedCourses() {
+  return window['go']['main']['App']['MigrateRelatedCourses']();
+}
+
 export function Scrape() {
   return window['go']['main']['App']['Scrape']();
 }

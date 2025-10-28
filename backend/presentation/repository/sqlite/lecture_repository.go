@@ -443,6 +443,139 @@ func (r *LectureRepository) Creates(lectures []domain.Lecture) error {
 	return nil
 }
 
+// MigrateRelatedCourses resolves stored related course codes into lecture ID links.
+func (r *LectureRepository) MigrateRelatedCourses(ctx context.Context) (int, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("begin migrate related courses transaction: %w", err)
+	}
+
+	rows, err := tx.QueryContext(ctx, `SELECT lecture_id, code FROM related_course_codes`)
+	if err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return 0, fmt.Errorf("rollback on select related course codes: %v (original error: %w)", rbErr, err)
+		}
+		return 0, fmt.Errorf("select related course codes: %w", err)
+	}
+
+	type pendingMapping struct {
+		lectureID  int
+		normalized string
+	}
+
+	mappings := make([]pendingMapping, 0)
+	codeSet := make(map[string]struct{})
+
+	for rows.Next() {
+		var (
+			lectureID int
+			code      string
+		)
+		if err := rows.Scan(&lectureID, &code); err != nil {
+			rows.Close()
+			if rbErr := tx.Rollback(); rbErr != nil {
+				return 0, fmt.Errorf("rollback on scan related course code: %v (original error: %w)", rbErr, err)
+			}
+			return 0, fmt.Errorf("scan related course code: %w", err)
+		}
+
+		normalized := normalizeCourseCode(code)
+		if normalized == "" {
+			continue
+		}
+
+		mappings = append(mappings, pendingMapping{lectureID: lectureID, normalized: normalized})
+		codeSet[normalized] = struct{}{}
+	}
+
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return 0, fmt.Errorf("rollback after iterating related course codes: %v (original error: %w)", rbErr, err)
+		}
+		return 0, fmt.Errorf("iterate related course codes: %w", err)
+	}
+	rows.Close()
+
+	if len(mappings) == 0 || len(codeSet) == 0 {
+		if err := tx.Commit(); err != nil {
+			return 0, fmt.Errorf("commit migrate related courses transaction: %w", err)
+		}
+		return 0, nil
+	}
+
+	codes := make([]string, 0, len(codeSet))
+	for code := range codeSet {
+		codes = append(codes, code)
+	}
+
+	codeToID, err := r.findLectureIDsByCodesTx(tx, codes)
+	if err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return 0, fmt.Errorf("rollback on resolve lecture ids: %v (original error: %w)", rbErr, err)
+		}
+		return 0, err
+	}
+
+	stmt, err := tx.PrepareContext(ctx, `INSERT OR IGNORE INTO related_courses (lecture_id, related_lecture_id) VALUES (?, ?)`)
+	if err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return 0, fmt.Errorf("rollback on prepare insert related course: %v (original error: %w)", rbErr, err)
+		}
+		return 0, fmt.Errorf("prepare insert related course: %w", err)
+	}
+	defer stmt.Close()
+
+	inserted := 0
+	type pair struct{ src, dst int }
+	seenPairs := make(map[pair]struct{})
+
+	for _, mapping := range mappings {
+		targetID, ok := codeToID[mapping.normalized]
+		if !ok {
+			continue
+		}
+		if targetID == mapping.lectureID {
+			continue
+		}
+
+		key := pair{src: mapping.lectureID, dst: targetID}
+		if _, exists := seenPairs[key]; exists {
+			continue
+		}
+		seenPairs[key] = struct{}{}
+
+		result, err := stmt.Exec(mapping.lectureID, targetID)
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				return 0, fmt.Errorf("rollback on execute insert related course: %v (original error: %w)", rbErr, err)
+			}
+			return 0, fmt.Errorf("insert migrated related course: %w", err)
+		}
+
+		affected, err := result.RowsAffected()
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				return 0, fmt.Errorf("rollback on rows affected: %v (original error: %w)", rbErr, err)
+			}
+			return 0, fmt.Errorf("rows affected on insert related course: %w", err)
+		}
+		if affected > 0 {
+			inserted++
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit migrate related courses transaction: %w", err)
+	}
+
+	return inserted, nil
+}
+
 // Update updates an existing lecture aggregate.
 func (r *LectureRepository) Update(lecture *domain.Lecture) error {
 	return ErrNotImplemented

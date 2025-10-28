@@ -298,6 +298,10 @@ func (uc *scraperUsecase) ScrapeTopPageAndSave(ctx context.Context, year int) ([
 		aggregated = append(aggregated, lectures...)
 	}
 
+	if _, err := uc.lectureRepo.MigrateRelatedCourses(ctx); err != nil {
+		return nil, fmt.Errorf("migrate related courses: %w", err)
+	}
+
 	return aggregated, nil
 }
 
