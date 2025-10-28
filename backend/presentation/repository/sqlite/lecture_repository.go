@@ -209,23 +209,81 @@ func (r *LectureRepository) FindByID(id int) (*domain.Lecture, error) {
 	return &lecture, nil
 }
 
-// FindByCode retrieves a lecture aggregate by its course code.
-func (r *LectureRepository) FindByCode(code string) (*domain.Lecture, error) {
+// FindByCode retrieves a lecture aggregate by its code, title, and open term combination.
+func (r *LectureRepository) FindByCode(code, title, openTerm string) (*domain.Lecture, error) {
 	code = strings.TrimSpace(code)
+	title = strings.TrimSpace(title)
+	openTerm = strings.TrimSpace(openTerm)
+
 	if code == "" {
 		return nil, fmt.Errorf("invalid lecture code: %q", code)
 	}
 
-	var id int
-	err := r.db.QueryRow(`SELECT id FROM lectures WHERE UPPER(code) = ? LIMIT 1`, strings.ToUpper(code)).Scan(&id)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
+	rows, err := r.db.Query(`SELECT id, title, open_term FROM lectures WHERE UPPER(code) = ?`, strings.ToUpper(code))
 	if err != nil {
-		return nil, fmt.Errorf("select lecture id by code: %w", err)
+		return nil, fmt.Errorf("select lecture candidates by code: %w", err)
+	}
+	defer func() {
+		if rows != nil {
+			rows.Close()
+		}
+	}()
+
+	desiredTitle := normalizeComparable(title)
+	desiredOpenTerm := normalizeComparable(openTerm)
+
+	var lectureID int
+
+	for rows.Next() {
+		var (
+			id       int
+			rowTitle sql.NullString
+			rowTerm  sql.NullString
+		)
+		if err := rows.Scan(&id, &rowTitle, &rowTerm); err != nil {
+			return nil, fmt.Errorf("scan lecture candidate: %w", err)
+		}
+
+		currentTitle := normalizeComparable(rowTitle.String)
+		currentOpenTerm := ""
+		if rowTerm.Valid {
+			currentOpenTerm = normalizeComparable(rowTerm.String)
+		}
+
+		if desiredTitle != "" {
+			if currentTitle != desiredTitle {
+				continue
+			}
+		} else if currentTitle != "" {
+			continue
+		}
+
+		if desiredOpenTerm != "" {
+			if currentOpenTerm != desiredOpenTerm {
+				continue
+			}
+		} else if currentOpenTerm != "" {
+			continue
+		}
+
+		lectureID = id
+		break
 	}
 
-	return r.FindByID(id)
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate lecture candidates: %w", err)
+	}
+
+	if lectureID == 0 {
+		return nil, nil
+	}
+
+	if err := rows.Close(); err != nil {
+		return nil, fmt.Errorf("close lecture candidates: %w", err)
+	}
+	rows = nil
+
+	return r.FindByID(lectureID)
 }
 
 // Search retrieves lecture summaries filtered by the provided query fields.
@@ -750,14 +808,14 @@ func (r *LectureRepository) fetchLecturePlans(lectureID int) ([]domain.LecturePl
 	plans := make([]domain.LecturePlan, 0)
 	for rows.Next() {
 		var (
-			count 	sql.NullInt64
-			plan sql.NullString
+			count      sql.NullInt64
+			plan       sql.NullString
 			assignment sql.NullString
 		)
 		if err := rows.Scan(&count, &plan, &assignment); err != nil {
 			return nil, fmt.Errorf("scan lecture plan: %w", err)
 		}
-		
+
 		lp := domain.LecturePlan{}
 		if count.Valid {
 			lp.Count = int(count.Int64)
@@ -1187,6 +1245,14 @@ func sanitizeRelatedCourseCodes(codes []string) []string {
 	}
 
 	return result
+}
+
+func normalizeComparable(value string) string {
+	if value == "" {
+		return ""
+	}
+	collapsed := strings.TrimSpace(strings.Join(strings.Fields(value), " "))
+	return collapsed
 }
 
 func (r *LectureRepository) ensureTeacherTx(tx *sql.Tx, name, url string) (int, error) {

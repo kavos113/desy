@@ -147,7 +147,7 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 		log.Printf("Scraping detail page: %s %s", item.Code, item.Title)
 		uc.reportProgress(ScrapeProgress{Total: total, Current: idx + 1, Code: strings.TrimSpace(item.Code), Title: strings.TrimSpace(item.Title)})
 
-		existing, err := uc.lectureRepo.FindByCode(item.Code)
+		existing, err := uc.lectureRepo.FindByCode(item.Code, item.Title, item.OpenTerm)
 		if err != nil {
 			return nil, fmt.Errorf("find lecture by code %s: %w", item.Code, err)
 		}

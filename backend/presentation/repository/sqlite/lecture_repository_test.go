@@ -157,6 +157,45 @@ func TestLectureRepositoryFindByIDNotFound(t *testing.T) {
 	}
 }
 
+func TestLectureRepositoryFindByCodeUsesCompositeKey(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code, open_term) VALUES (?, ?, ?, ?, ?)`, 1, "Test University", "Intro to Law", "LAH.S101", "2025 1Q")
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code, open_term) VALUES (?, ?, ?, ?, ?)`, 2, "Test University", "Intro to Law", "LAH.S101", "2025 2Q")
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code) VALUES (?, ?, ?, ?)`, 3, "Test University", "Intro to Law", "LAH.S101")
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code, open_term) VALUES (?, ?, ?, ?, ?)`, 4, "Test University", "Advanced Law", "LAH.S101", "2025 1Q")
+
+	lecture, err := repo.FindByCode("LAH.S101", "Intro to Law", "2025 2Q")
+	if err != nil {
+		t.Fatalf("FindByCode returned error: %v", err)
+	}
+	if lecture == nil {
+		t.Fatalf("expected lecture for composite key")
+	}
+	if lecture.ID != 2 {
+		t.Fatalf("unexpected lecture id: got %d want %d", lecture.ID, 2)
+	}
+
+	lecture, err = repo.FindByCode("LAH.S101", "Intro to Law", "")
+	if err != nil {
+		t.Fatalf("FindByCode returned error: %v", err)
+	}
+	if lecture == nil {
+		t.Fatalf("expected lecture with empty open term")
+	}
+	if lecture.ID != 3 {
+		t.Fatalf("unexpected lecture id for empty open term: got %d want %d", lecture.ID, 3)
+	}
+
+	lecture, err = repo.FindByCode("LAH.S101", "Non Existing", "2025 1Q")
+	if err != nil {
+		t.Fatalf("FindByCode returned error: %v", err)
+	}
+	if lecture != nil {
+		t.Fatalf("expected no lecture for unknown combination, got %#v", lecture)
+	}
+}
+
 func TestLectureRepositorySearchAppliesFilters(t *testing.T) {
 	repo, db := newTestRepository(t)
 	seedSearchData(t, db)

@@ -110,7 +110,7 @@ type SearchQuery struct {
 
 type LectureRepository interface {
 	FindByID(id int) (*Lecture, error)
-	FindByCode(code string) (*Lecture, error)
+	FindByCode(code, title, openTerm string) (*Lecture, error)
 	Search(query SearchQuery) ([]LectureSummary, error)
 	Create(lecture *Lecture) error
 	Creates(lectures []Lecture) error
