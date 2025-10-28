@@ -1,39 +1,51 @@
-import { useEffect, useState } from "react";
-import "./common.css";
+import { useEffect, useMemo, useState } from "react";
 import ComboBoxMenu from "./ComboBoxMenu";
-import { Menu } from "./types";
+import { Menu } from "./Menu";
+import "./common.css";
 
 type ComboBoxProps = {
   items: Menu;
+  defaultSelectedItems?: string[];
+  onSelectItem?: (selected: string[]) => void;
   className?: string;
-  initialSelectedItems?: string[];
-  onSelectItem?: (items: string[]) => void;
 };
 
-const toUniqueSelection = (items: string[]) => Array.from(new Set(items));
-
-const ComboBox = ({ items, className, initialSelectedItems = [], onSelectItem }: ComboBoxProps) => {
-  const [selectedItems, setSelectedItems] = useState<string[]>(() => toUniqueSelection(initialSelectedItems));
+const ComboBox = ({
+  items,
+  defaultSelectedItems,
+  onSelectItem,
+  className,
+}: ComboBoxProps) => {
+  const [selectedItems, setSelectedItems] = useState<string[]>(() => {
+    return defaultSelectedItems ? [...defaultSelectedItems] : [];
+  });
 
   useEffect(() => {
-    setSelectedItems(toUniqueSelection(initialSelectedItems));
-  }, [initialSelectedItems]);
+    if (defaultSelectedItems) {
+      setSelectedItems([...defaultSelectedItems]);
+    }
+  }, [defaultSelectedItems]);
+
+  const selectedKeySet = useMemo(() => {
+    return new Set(selectedItems);
+  }, [selectedItems]);
 
   const handleSelect = (key: string) => {
-    setSelectedItems((prev) => {
-      const exists = prev.includes(key);
-      const next = exists ? prev.filter((item) => item !== key) : [...prev, key];
+    setSelectedItems((previous) => {
+      const exists = previous.includes(key);
+      const next = exists
+        ? previous.filter((value) => value !== key)
+        : [...previous, key];
+
       onSelectItem?.(next);
       return next;
     });
   };
 
-  const containerClass = ["combobox-box-container", className].filter(Boolean).join(" ");
-
   return (
-    <div className={containerClass}>
+    <div className={["combobox-box-container", className].filter(Boolean).join(" ")}>
       <div className="comboMenu">
-        <ComboBoxMenu items={items} onClickMenuItem={handleSelect} />
+        <ComboBoxMenu items={items} selectedKeys={selectedKeySet} onSelect={handleSelect} />
       </div>
     </div>
   );

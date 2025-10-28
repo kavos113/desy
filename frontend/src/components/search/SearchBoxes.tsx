@@ -1,65 +1,59 @@
-import { useState } from "react";
-import "./search.css";
-import { ComboBox, SearchBox } from "../common";
-import { SearchComboBox } from "./types";
+import { useEffect, useState } from "react";
+import ComboBox from "../common/ComboBox";
+import SearchBox from "../common/SearchBox";
 import {
-  DEPARTMENT_MENU,
-  MOBILE_DEPARTMENT_MENU,
-  UNIVERSITY_MENU,
-  YEAR_MENU,
-} from "./menus";
+  DEPARTMENTS_MENU,
+  MOBILE_DEPARTMENTS_MENU,
+  UNIVERSITIES_MENU,
+  YEARS_MENU,
+} from "../../constants";
+import type { SearchComboBox } from "./types";
+import "./search.css";
 
 type SearchBoxesProps = {
-  onSelectMenuItem?: (key: SearchComboBox, items: string[]) => void;
+  onClickMenuItem?: (key: SearchComboBox, items: string[]) => void;
   onChangeSearchBox?: (title: string, lecturer: string) => void;
 };
 
-const SearchBoxes = ({ onSelectMenuItem, onChangeSearchBox }: SearchBoxesProps) => {
+const SearchBoxes = ({ onClickMenuItem, onChangeSearchBox }: SearchBoxesProps) => {
   const [title, setTitle] = useState("");
   const [lecturer, setLecturer] = useState("");
 
-  const handleSelect = (type: SearchComboBox) => (items: string[]) => {
-    onSelectMenuItem?.(type, items);
-  };
+  useEffect(() => {
+    onChangeSearchBox?.(title, lecturer);
+  }, [lecturer, onChangeSearchBox, title]);
 
-  const handleTitleChange = (value: string) => {
-    setTitle(value);
-    onChangeSearchBox?.(value, lecturer);
-  };
-
-  const handleLecturerChange = (value: string) => {
-    setLecturer(value);
-    onChangeSearchBox?.(title, value);
+  const handleSelect = (key: SearchComboBox) => {
+    return (items: string[]) => {
+      onClickMenuItem?.(key, items);
+    };
   };
 
   return (
     <div className="search-box-wrapper">
-      <div className="search-box-row">
-        <ComboBox items={UNIVERSITY_MENU} onSelectItem={handleSelect("university")} />
-        <ComboBox
-          className="desktop"
-          items={DEPARTMENT_MENU}
-          onSelectItem={handleSelect("department")}
-        />
-        <ComboBox
-          className="mobile"
-          items={MOBILE_DEPARTMENT_MENU}
-          onSelectItem={handleSelect("department")}
-        />
-        <ComboBox items={YEAR_MENU} onSelectItem={handleSelect("year")} />
-      </div>
-      <div className="search-box-row search-box-row--inputs">
-        <SearchBox
-          placeholder="講義名"
-          value={title}
-          onChange={handleTitleChange}
-        />
-        <SearchBox
-          placeholder="教員名"
-          value={lecturer}
-          onChange={handleLecturerChange}
-        />
-      </div>
+      <ComboBox items={UNIVERSITIES_MENU} onSelectItem={handleSelect("university")}
+      />
+      <ComboBox
+        items={DEPARTMENTS_MENU}
+        className="desktop"
+        onSelectItem={handleSelect("department")}
+      />
+      <ComboBox
+        items={MOBILE_DEPARTMENTS_MENU}
+        className="mobile"
+        onSelectItem={handleSelect("department")}
+      />
+      <ComboBox items={YEARS_MENU} onSelectItem={handleSelect("year")} />
+      <SearchBox
+        placeholder="講義名"
+        value={title}
+        onChange={setTitle}
+      />
+      <SearchBox
+        placeholder="教員名"
+        value={lecturer}
+        onChange={setLecturer}
+      />
     </div>
   );
 };

@@ -1,31 +1,41 @@
-import "./search.css";
 import SearchBoxes from "./SearchBoxes";
 import SearchConditions from "./SearchConditions";
-import { SearchConditionsType, SearchTimetableCell } from "./types";
+import type {
+  SearchComboBox,
+  SearchConditionKey,
+  SearchTimetableSelection,
+} from "./types";
+import "./search.css";
 
 type SearchFieldProps = {
-  onConditionChange?: (key: SearchConditionsType, items: string[]) => void;
-  onTimetableChange?: (items: SearchTimetableCell[]) => void;
+  onClickMenuItem?: (key: SearchConditionKey, items: string[]) => void;
+  onTimetableChange?: (items: SearchTimetableSelection[]) => void;
 };
 
-const SearchField = ({ onConditionChange, onTimetableChange }: SearchFieldProps) => {
-  const handleSelect = (key: SearchConditionsType, items: string[]) => {
-    onConditionChange?.(key, items);
-  };
-
+const SearchField = ({ onClickMenuItem, onTimetableChange }: SearchFieldProps) => {
   const handleSearchBoxChange = (title: string, lecturer: string) => {
-    onConditionChange?.("title", title ? [title] : []);
-    onConditionChange?.("lecturer", lecturer ? [lecturer] : []);
+    onClickMenuItem?.("title", title ? [title] : []);
+    onClickMenuItem?.("lecturer", lecturer ? [lecturer] : []);
   };
 
-  const handleTimetable = (items: SearchTimetableCell[]) => {
-    onTimetableChange?.(items);
+  const handleClickMenuItem = (key: SearchComboBox, items: string[]) => {
+    onClickMenuItem?.(key, items);
+  };
+
+  const handleConditionChange = (key: SearchConditionKey, items: string[]) => {
+    onClickMenuItem?.(key, items);
   };
 
   return (
     <div className="search-container">
-      <SearchBoxes onSelectMenuItem={handleSelect} onChangeSearchBox={handleSearchBoxChange} />
-      <SearchConditions onCheckItem={handleSelect} onTimetableChange={handleTimetable} />
+      <SearchBoxes
+        onClickMenuItem={handleClickMenuItem}
+        onChangeSearchBox={handleSearchBoxChange}
+      />
+      <SearchConditions
+        onCheckItem={handleConditionChange}
+        onTimetableChange={onTimetableChange}
+      />
     </div>
   );
 };

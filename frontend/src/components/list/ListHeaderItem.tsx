@@ -1,38 +1,40 @@
-import './list.css';
-
-export type ListSortKey = 'code' | 'title' | 'lecturer' | 'timetable' | 'department';
+import "./list.css";
 
 type ListHeaderItemProps = {
-  onSort?: (key: ListSortKey) => void;
+  onSort?: (key: string) => void;
 };
 
 const ListHeaderItem = ({ onSort }: ListHeaderItemProps) => {
-  const handleSort = (key: ListSortKey) => {
-    if (onSort) {
-      onSort(key);
-    }
+  const handleSort = (key: string) => () => {
+    onSort?.(key);
   };
 
   return (
-    <div className="list-header">
-      <span className="list-cell university">大学名</span>
-      <button type="button" className="list-cell code" onClick={() => handleSort('code')}>
-        コード
-      </button>
-      <button type="button" className="list-cell name" onClick={() => handleSort('title')}>
-        講義名
-      </button>
-      <button type="button" className="list-cell lecturer" onClick={() => handleSort('lecturer')}>
-        担当
-      </button>
-      <button type="button" className="list-cell timetable" onClick={() => handleSort('timetable')}>
-        時間割
-      </button>
-      <span className="list-cell semester">開講時期</span>
-      <button type="button" className="list-cell department" onClick={() => handleSort('department')}>
-        開講元
-      </button>
-      <span className="list-cell credit">単位数</span>
+    <div className="item-wrapper header">
+      <div className="item university">
+        <p className="text">大学名</p>
+      </div>
+      <div className="item code sortable" onClick={handleSort("code")}>
+        <p className="text">コード</p>
+      </div>
+      <div className="item name sortable" onClick={handleSort("title")}>
+        <p className="text">講義名</p>
+      </div>
+      <div className="item lecturer sortable" onClick={handleSort("lecturer")}>
+        <p className="text">担当</p>
+      </div>
+      <div className="item timetable sortable" onClick={handleSort("timetable")}>
+        <p className="text">時間割</p>
+      </div>
+      <div className="item semester">
+        <p className="text">開講時期</p>
+      </div>
+      <div className="item department sortable" onClick={handleSort("department")}>
+        <p className="text">開講元</p>
+      </div>
+      <div className="item credit">
+        <p className="text">単位数</p>
+      </div>
     </div>
   );
 };

@@ -1,111 +1,99 @@
-import { useEffect, useState } from 'react';
-import { GetLectureDetails } from '../../../wailsjs/go/main/App';
-import { domain } from '../../../wailsjs/go/models';
-import CourseDetailPanel from './CourseDetailPanel';
-import ListHeaderItem, { ListSortKey } from './ListHeaderItem';
-import ListItemRow from './ListItemRow';
-import './list.css';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { domain } from "../../../wailsjs/go/models";
+import { GetLectureDetails } from "../../../wailsjs/go/main/App";
+import SimpleButton from "../common/SimpleButton";
+import CourseDetail from "./CourseDetail";
+import ListHeaderItem from "./ListHeaderItem";
+import ListItem from "./ListItem";
+import "./list.css";
 
-export type ListTableProps = {
+type ListTableProps = {
   items: domain.LectureSummary[];
-  loading?: boolean;
-  statusMessage?: string | null;
-  errorMessage?: string | null;
-  onSort?: (key: ListSortKey) => void;
+  onSort?: (key: string) => void;
+  className?: string;
 };
 
-const ListTable = ({ items, loading = false, statusMessage, errorMessage, onSort }: ListTableProps) => {
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [detail, setDetail] = useState<domain.Lecture | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState<string | null>(null);
-  const [isDetailOpen, setDetailOpen] = useState(false);
-  const [isOverlayInteractive, setOverlayInteractive] = useState(false);
+const CLOSE_DELAY_MS = 250;
+
+const ListTable = ({ items, onSort, className }: ListTableProps) => {
+  const [selectedLecture, setSelectedLecture] = useState<domain.Lecture | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isOverlayActive, setIsOverlayActive] = useState(false);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleSort = useCallback(
+    (key: string) => {
+      onSort?.(key);
+    },
+    [onSort]
+  );
+
+  const handleListItemClick = useCallback(async (id: number) => {
+    setIsLoadingDetail(true);
+    try {
+      const lecture = await GetLectureDetails(id);
+      setSelectedLecture(lecture);
+      setIsDetailOpen(true);
+      setIsOverlayActive(true);
+    } catch (error) {
+      console.error("GetLectureDetails failed", error);
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  }, []);
+
+  const closeDetail = useCallback(() => {
+    setIsDetailOpen(false);
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+    }
+    closeTimerRef.current = setTimeout(() => {
+      setIsOverlayActive(false);
+    }, CLOSE_DELAY_MS);
+  }, []);
 
   useEffect(() => {
-    setSelectedId(null);
-    setDetail(null);
-    setDetailError(null);
-    setDetailOpen(false);
-    setOverlayInteractive(false);
-  }, [items]);
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
 
-  const handleSort = (key: ListSortKey) => {
-    if (onSort) {
-      onSort(key);
-    }
-  };
+  const tableClassName = useMemo(() => {
+    return ["list-table", className].filter(Boolean).join(" ");
+  }, [className]);
 
-  const handleSelect = async (lectureId: number) => {
-    setSelectedId(lectureId);
-    setDetailLoading(true);
-    setDetailError(null);
-    setDetailOpen(true);
-    setOverlayInteractive(true);
+  const detailPanelClassName = useMemo(() => {
+    return ["detail-panel", isDetailOpen ? "active" : ""].filter(Boolean).join(" ");
+  }, [isDetailOpen]);
 
-    try {
-      const data = await GetLectureDetails(lectureId);
-      setDetail(data ?? null);
-    } catch (error) {
-      console.error(error);
-      setDetailError('講義詳細の取得に失敗しました。');
-    } finally {
-      setDetailLoading(false);
-    }
-  };
+  const overlayClassName = useMemo(() => {
+    return ["overlay", isOverlayActive ? "active" : ""].filter(Boolean).join(" ");
+  }, [isOverlayActive]);
 
-  const handleCloseDetail = () => {
-    setDetailOpen(false);
-    setTimeout(() => {
-      setOverlayInteractive(false);
-    }, 250);
-  };
-
-  const overlayClassNames = [
-    'overlay',
-    isDetailOpen ? 'overlay--visible' : '',
-    isOverlayInteractive ? 'overlay--interactive' : ''
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-  const hasMessage = Boolean(statusMessage || errorMessage);
+  const backButtonClassName = useMemo(() => {
+    return ["back-button", isDetailOpen ? "visible" : ""].filter(Boolean).join(" ");
+  }, [isDetailOpen]);
 
   return (
-    <div className="list-table">
-      <div className="list-table-header">
-        <ListHeaderItem onSort={handleSort} />
-        {hasMessage ? (
-          <div className="list-table-messages">
-            {statusMessage && <span className="list-table-status">{statusMessage}</span>}
-            {errorMessage && <span className="list-table-error">{errorMessage}</span>}
-          </div>
-        ) : null}
-      </div>
-
-      {loading ? (
-        <p className="list-table-placeholder">検索結果を読み込み中です...</p>
-      ) : items.length === 0 ? (
-        <p className="list-table-placeholder">検索条件を入力して講義を探してください。</p>
+    <div className={tableClassName}>
+      <ListHeaderItem onSort={handleSort} />
+      {items.length === 0 ? (
+        <p>講義が見つかりませんでした。</p>
       ) : (
-        <div className="list-table-scroll">
-          {items.map((item) => (
-            <ListItemRow key={item.ID} item={item} onSelect={handleSelect} selected={item.ID === selectedId} />
-          ))}
-        </div>
+        items.map((item) => (
+          <ListItem key={item.ID} item={item} onClick={handleListItemClick} />
+        ))
       )}
 
-      <CourseDetailPanel lecture={detail} open={isDetailOpen} loading={detailLoading} errorMessage={detailError} />
-
-      <button
-        type="button"
-        className={`back-button${isDetailOpen ? ' back-button--visible' : ''}`}
-        onClick={handleCloseDetail}
-      >
-        戻る
-      </button>
-
-      <div className={overlayClassNames} onClick={handleCloseDetail} role="presentation" />
+      <div className={detailPanelClassName}>
+        {isLoadingDetail && <p className="course-detail-text">読み込み中...</p>}
+        <CourseDetail lecture={selectedLecture} />
+      </div>
+      <SimpleButton text="戻る" className={backButtonClassName} onClick={closeDetail} />
+      <div className={overlayClassName} onClick={closeDetail}></div>
     </div>
   );
 };

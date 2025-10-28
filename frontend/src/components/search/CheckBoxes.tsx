@@ -1,57 +1,54 @@
-import { useEffect, useMemo, useState } from "react";
-import { CheckBox as CommonCheckBox } from "../common";
+import { useEffect, useState } from "react";
+import CheckBox from "../common/CheckBox";
 import "./search.css";
 
 type CheckBoxesProps = {
-  idPrefix: string;
+  checkboxId: string;
   contents: string[];
-  selectedItems?: string[];
-  onChange?: (items: string[]) => void;
+  onCheckItem?: (items: string[]) => void;
 };
 
-type CheckedMap = Record<string, boolean>;
-
-const buildCheckedMap = (contents: string[], selected: string[]): CheckedMap => {
-  return contents.reduce<CheckedMap>((acc, item) => {
-    acc[item] = selected.includes(item);
-    return acc;
-  }, {});
+const buildInitialState = (length: number): boolean[] => {
+  return Array.from({ length }, () => false);
 };
 
-const CheckBoxes = ({ idPrefix, contents, selectedItems = [], onChange }: CheckBoxesProps) => {
-  const [checked, setChecked] = useState<CheckedMap>(() => buildCheckedMap(contents, selectedItems));
+const CheckBoxes = ({ checkboxId, contents, onCheckItem }: CheckBoxesProps) => {
+  const [checked, setChecked] = useState<boolean[]>(() => {
+    return buildInitialState(contents.length);
+  });
 
   useEffect(() => {
-    setChecked(buildCheckedMap(contents, selectedItems));
-  }, [contents, selectedItems]);
-
-  const selected = useMemo(() => contents.filter((item) => checked[item]), [checked, contents]);
+    setChecked(buildInitialState(contents.length));
+  }, [contents]);
 
   useEffect(() => {
-    onChange?.(selected);
-  }, [onChange, selected]);
+    const selected = contents.filter((_, index) => checked[index]);
+    onCheckItem?.(selected);
+  }, [checked, contents, onCheckItem]);
 
-  const toggle = (item: string, value?: boolean) => {
-    setChecked((prev) => {
-      const nextValue = typeof value === "boolean" ? value : !prev[item];
-      return {
-        ...prev,
-        [item]: nextValue,
-      };
+  const handleCheck = (index: number, value: boolean) => {
+    const zeroBasedIndex = index - 1;
+    if (zeroBasedIndex < 0 || zeroBasedIndex >= contents.length) {
+      return;
+    }
+
+    setChecked((previous) => {
+      const next = [...previous];
+      next[zeroBasedIndex] = value;
+      return next;
     });
   };
 
   return (
     <div className="check-boxes-container">
-      {contents.map((item, index) => {
-        const elementId = `${idPrefix}-${index}`;
+      {contents.map((content, index) => {
+        const id = `${checkboxId}${index + 1}`;
         return (
-          <CommonCheckBox
-            key={elementId}
-            checkboxId={elementId}
-            content={item}
-            checked={Boolean(checked[item])}
-            onChange={(value) => toggle(item, value)}
+          <CheckBox
+            key={id}
+            checkboxId={id}
+            content={content}
+            onCheckItem={handleCheck}
           />
         );
       })}

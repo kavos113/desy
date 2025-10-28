@@ -1,37 +1,44 @@
-import { ChangeEvent, InputHTMLAttributes } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import "./common.css";
 
 type SearchBoxProps = {
-  placeholder?: string;
+  placeholder: string;
   value?: string;
   defaultValue?: string;
-  className?: string;
   onChange?: (value: string) => void;
-} & Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "defaultValue" | "placeholder" | "onChange" | "className">;
+};
 
 const SearchBox = ({
   placeholder,
   value,
-  defaultValue,
-  className,
+  defaultValue = "",
   onChange,
-  ...rest
 }: SearchBoxProps) => {
-  const containerClass = ["search-box-container", className].filter(Boolean).join(" ");
+  const [internalValue, setInternalValue] = useState(defaultValue);
+
+  useEffect(() => {
+    setInternalValue(defaultValue);
+  }, [defaultValue]);
+
+  const inputValue = value ?? internalValue;
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange?.(event.target.value);
+    const nextValue = event.target.value;
+
+    if (value === undefined) {
+      setInternalValue(nextValue);
+    }
+
+    onChange?.(nextValue);
   };
 
   return (
-    <div className={containerClass}>
+    <div className="search-box-container">
       <input
-        {...rest}
-        type="text"
         className="search-box-input"
-        value={value}
-        defaultValue={defaultValue}
+        type="text"
         placeholder={placeholder}
+        value={inputValue}
         onChange={handleChange}
       />
     </div>

@@ -1,126 +1,109 @@
-import { useState } from "react";
-import "./content.css";
-import Search from "./search/Search";
-import ListTable from "./list/ListTable";
-import { ListSortKey } from "./list/ListHeaderItem";
+import { useCallback, useMemo, useState } from "react";
 import { domain } from "../../wailsjs/go/models";
+import SimpleButton from "./common/SimpleButton";
+import ListTable from "./list/ListTable";
+import Search from "./search/Search";
+import { formatTeachers, formatTimetables } from "./list/utils";
+import "./content.css";
 
-const collator = new Intl.Collator("ja", { sensitivity: "base", numeric: true });
+type SortKey = "title" | "code" | "lecturer" | "department" | "timetable";
 
-const timetableText = (timetables: domain.TimeTable[] | undefined): string => {
-  if (!timetables?.length) {
-    return "";
+type Comparator = (
+  left: domain.LectureSummary,
+  right: domain.LectureSummary,
+  ascending: boolean
+) => number;
+
+const toComparableString = (value: string | undefined | null) => {
+  return (value ?? "").toString().trim().toLowerCase();
+};
+
+const compareText = (left: string, right: string, ascending: boolean) => {
+  const normalizedLeft = toComparableString(left);
+  const normalizedRight = toComparableString(right);
+
+  if (normalizedLeft === normalizedRight) {
+    return 0;
   }
 
-  return timetables
-    .map((item) => {
-      const semester = item.Semester ? `${item.Semester}` : "";
-      const day = item.DayOfWeek ? `${item.DayOfWeek}` : "";
-      const period = item.Period ? `${item.Period}限` : "";
-      const room = item.Room?.Name ? `(${item.Room.Name})` : "";
-      return [semester, day, period].filter(Boolean).join("") + room;
-    })
-    .join(", ");
+  const result = normalizedLeft < normalizedRight ? -1 : 1;
+  return ascending ? result : -result;
 };
 
-const initialSortState: Record<ListSortKey, boolean> = {
-  title: true,
-  code: true,
-  lecturer: true,
-  department: true,
-  timetable: true,
-};
-
-const sortValue = (item: domain.LectureSummary, key: ListSortKey): string => {
-  switch (key) {
-    case "title":
-      return item.Title ?? "";
-    case "code":
-      return item.Code ?? "";
-    case "lecturer":
-      return (item.Teachers ?? []).map((teacher: domain.Teacher) => teacher.Name).join(", ");
-    case "department":
-      return item.Department ?? "";
-    case "timetable":
-      return timetableText(item.Timetables);
-    default:
-      return "";
-  }
-};
+const buildComparators = (): Record<SortKey, Comparator> => ({
+  title: (left, right, ascending) => compareText(left.Title ?? "", right.Title ?? "", ascending),
+  code: (left, right, ascending) => compareText(left.Code ?? "", right.Code ?? "", ascending),
+  lecturer: (left, right, ascending) =>
+    compareText(formatTeachers(left.Teachers), formatTeachers(right.Teachers), ascending),
+  department: (left, right, ascending) =>
+    compareText(left.Department ?? "", right.Department ?? "", ascending),
+  timetable: (left, right, ascending) =>
+    compareText(formatTimetables(left.Timetables), formatTimetables(right.Timetables), ascending),
+});
 
 const Content = () => {
-  const [items, setItems] = useState<domain.LectureSummary[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [sortState, setSortState] = useState(initialSortState);
+  const [lectures, setLectures] = useState<domain.LectureSummary[]>([]);
+  const [sortState, setSortState] = useState<Record<SortKey, boolean>>({
+    title: true,
+    code: true,
+    lecturer: true,
+    department: true,
+    timetable: true,
+  });
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
 
-  const handleSearchStart = () => {
-    setLoading(true);
-    setStatusMessage(null);
-    setErrorMessage(null);
-  };
+  const comparators = useMemo(buildComparators, []);
 
-  const handleSearch = (results: domain.LectureSummary[]) => {
-  setItems(results.slice());
-    setLoading(false);
-    setSearchOpen(false);
-    setStatusMessage(results.length ? `${results.length}件の講義が見つかりました。` : "講義は見つかりませんでした。");
-    setErrorMessage(null);
-  setSortState({ ...initialSortState });
-  };
+  const handleSearch = useCallback((results: domain.LectureSummary[]) => {
+    setLectures(results);
+    setIsSearchVisible(false);
+  }, []);
 
-  const handleSearchError = (message: string) => {
-    setLoading(false);
-    setErrorMessage(message);
-  };
+  const handleSort = useCallback(
+    (key: string) => {
+      if (!isSortKey(key)) {
+        return;
+      }
 
-  const handleSort = (key: ListSortKey) => {
-    const ascending = sortState[key];
-    setSortState((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-
-    setItems((prevItems) => {
-      const next = [...prevItems];
-      next.sort((a, b) => {
-        const aValue = sortValue(a, key);
-        const bValue = sortValue(b, key);
-        const comparison = collator.compare(aValue, bValue);
-        if (comparison === 0) {
-          return 0;
-        }
-        return ascending ? comparison : -comparison;
+      setLectures((previousLectures) => {
+        const nextLectures = [...previousLectures];
+        const comparator = comparators[key];
+        const ascending = sortState[key];
+        nextLectures.sort((left, right) => comparator(left, right, ascending));
+        return nextLectures;
       });
-      return next;
-    });
-  };
+
+      setSortState((previousSortState) => ({
+        ...previousSortState,
+        [key]: !previousSortState[key],
+      }));
+    },
+    [comparators, sortState]
+  );
+
+  const handleMenuClick = useCallback(() => {
+    setIsSearchVisible(true);
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setIsSearchVisible(false);
+  }, []);
+
+  const searchPanelClassName = useMemo(() => {
+    return ["search-panel", isSearchVisible ? "search-visible" : ""].filter(Boolean).join(" ");
+  }, [isSearchVisible]);
 
   return (
     <div className="content-container">
-      <Search
-        className={`content-search${searchOpen ? " search-open" : ""}`}
-        onSearchStart={handleSearchStart}
-        onSearch={handleSearch}
-        onSearchError={handleSearchError}
-        onBack={() => setSearchOpen(false)}
-      />
-      <button type="button" className="search-menu-button" onClick={() => setSearchOpen(true)}>
-        メニュー
-      </button>
-      <div className="content-table">
-        <ListTable
-          items={items}
-          loading={loading}
-          statusMessage={statusMessage}
-          errorMessage={errorMessage}
-          onSort={handleSort}
-        />
-      </div>
+      <Search className={searchPanelClassName} onSearch={handleSearch} onBack={handleBack} />
+      <SimpleButton text="メニュー" className="search-menu" onClick={handleMenuClick} />
+      <ListTable className="table-panel" items={lectures} onSort={handleSort} />
     </div>
   );
 };
+
+function isSortKey(value: string): value is SortKey {
+  return ["title", "code", "lecturer", "department", "timetable"].includes(value);
+}
 
 export default Content;

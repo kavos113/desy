@@ -1,90 +1,86 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import SimpleButton from "../common/SimpleButton";
 import "./search.css";
-import { Greet, Scrape } from "../../../wailsjs/go/main/App";
+import { Greet, Scrape, ScrapeTest } from "../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../wailsjs/runtime/runtime";
-import { SimpleButton } from "../common";
 
-type FetchButtonProps = {
-  className?: string;
-};
+const DEFAULT_STATUS = "Not fetched";
 
-const FetchButton = ({ className }: FetchButtonProps) => {
-  const [status, setStatus] = useState("未取得");
-  const [loading, setLoading] = useState(false);
-  const [testing, setTesting] = useState(false);
+type FetchStatusEventPayload = unknown;
+
+type Unsubscribe = () => void;
+
+const FetchButton = () => {
+  const [status, setStatus] = useState(DEFAULT_STATUS);
+  const [isFetching, setIsFetching] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    let unsubscribe: Unsubscribe | undefined;
 
     try {
-      const off = EventsOn("fetch_status", (message?: string) => {
-        if (typeof message === "string" && message.length > 0) {
-          setStatus(message);
-        }
+      const result = EventsOn("fetch_status", (payload: FetchStatusEventPayload) => {
+        setStatus(String(payload));
       });
 
-      return () => {
-        off?.();
-      };
+      if (typeof result === "function") {
+        unsubscribe = result;
+      }
     } catch (error) {
-      console.warn("Failed to subscribe fetch_status event", error);
-      return undefined;
+      // イベント未定義でも処理を続行する
+    }
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
+  const handleFetch = useCallback(async () => {
+    setIsFetching(true);
+    setStatus("Fetching...");
+    try {
+      await Scrape();
+      setStatus("Fetched");
+    } catch (error) {
+      console.error("Scrape failed", error);
+      setStatus("Fetch failed");
+    } finally {
+      setIsFetching(false);
     }
   }, []);
 
-  const handleScrape = async () => {
-    if (loading) {
-      return;
-    }
-    setLoading(true);
-    setStatus("スクレイピングを実行中です...");
+  const handleFetchTest = useCallback(async () => {
+    setIsFetching(true);
+    setStatus("Fetch-Test...");
     try {
-      await Scrape();
-      setStatus("最新のシラバス情報を取得しました。");
+      await ScrapeTest();
+      setStatus("Fetch-Test Completed");
     } catch (error) {
-      console.error(error);
-      setStatus("スクレイピングに失敗しました。");
+      console.error("Scrape failed", error);
+      setStatus("Fetch-Test failed");
     } finally {
-      setLoading(false);
+      setIsFetching(false);
     }
-  };
+  }, []);
 
-  const handleTest = async () => {
-    if (testing) {
-      return;
-    }
-    setTesting(true);
-    setStatus("テスト呼び出しを実行中です...");
+  const handleGreeting = useCallback(async () => {
     try {
-      const greeting = await Greet("Fetch");
-      setStatus(greeting);
+      const message = await Greet("Fetch-Test");
+      setStatus(message);
     } catch (error) {
-      console.error(error);
-      setStatus("テスト呼び出しに失敗しました。");
-    } finally {
-      setTesting(false);
+      console.error("Greet failed", error);
+      setStatus("Greeting failed");
     }
-  };
+  }, []);
 
   return (
-    <div className={["fetch-panel", className].filter(Boolean).join(" ")}>
-      <div className="fetch-buttons">
-        <SimpleButton
-          text={loading ? "Fetching..." : "Fetch"}
-          className="secondary"
-          onClick={handleScrape}
-          disabled={loading}
-        />
-        <SimpleButton
-          text={testing ? "Testing..." : "Fetch-Test"}
-          className="ghost"
-          onClick={handleTest}
-          disabled={testing}
-        />
+    <div>
+      <div className="button-wrapper">
+        <SimpleButton text="Fetch" onClick={handleFetch} disabled={isFetching} />
+        <SimpleButton text="Fetch-Test" onClick={handleFetchTest} />
       </div>
-      <p className="search-summary">{status}</p>
+      <div>
+        <p className="fetch-status">{status}</p>
+      </div>
     </div>
   );
 };

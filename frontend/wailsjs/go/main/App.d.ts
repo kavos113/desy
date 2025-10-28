@@ -8,4 +8,6 @@ export function Greet(arg1:string):Promise<string>;
 
 export function Scrape():Promise<void>;
 
+export function ScrapeTest():Promise<void>;
+
 export function SearchLectures(arg1:domain.SearchQuery):Promise<Array<domain.LectureSummary>>;
