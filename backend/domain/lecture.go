@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type Lecture struct {
 	ID                 int
@@ -13,6 +16,7 @@ type Lecture struct {
 	Level              Level
 	Credit             int
 	Year               int
+	OpenTerm           string
 	Language           string
 	Url                string
 	Abstract           string
@@ -27,6 +31,7 @@ type Lecture struct {
 	Contact            string
 	OfficeHours        string
 	Note               string
+	UpdatedAt          time.Time
 	Timetables         []TimeTable
 	Teachers           []Teacher
 	LecturePlans       []LecturePlan
@@ -105,6 +110,7 @@ type SearchQuery struct {
 
 type LectureRepository interface {
 	FindByID(id int) (*Lecture, error)
+	FindByCode(code string) (*Lecture, error)
 	Search(query SearchQuery) ([]LectureSummary, error)
 	Create(lecture *Lecture) error
 	Creates(lectures []Lecture) error

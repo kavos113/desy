@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/kavos113/desy/backend/domain"
 	"github.com/kavos113/desy/backend/presentation/scraper"
@@ -135,6 +137,13 @@ func TestLectureRepositoryFindByIDReturnsAggregate(t *testing.T) {
 	if len(lecture.RelatedCourseCodes) != 1 || lecture.RelatedCourseCodes[0] != "CS102" {
 		t.Fatalf("unexpected related course codes: %#v", lecture.RelatedCourseCodes)
 	}
+	if lecture.OpenTerm != "2025 3Q" {
+		t.Fatalf("unexpected open term: %s", lecture.OpenTerm)
+	}
+	expectedUpdated := time.Date(2025, time.March, 19, 0, 0, 0, 0, time.UTC)
+	if !lecture.UpdatedAt.Equal(expectedUpdated) {
+		t.Fatalf("unexpected updated_at: %v", lecture.UpdatedAt)
+	}
 }
 
 func TestLectureRepositoryFindByIDNotFound(t *testing.T) {
@@ -241,6 +250,15 @@ func TestLectureRepositoryCreatePersistsAggregate(t *testing.T) {
 	}
 	if len(saved.RelatedCourseCodes) == 0 {
 		t.Fatalf("expected related course codes to be stored")
+	}
+	if saved.OpenTerm != strings.TrimSpace(lecture.OpenTerm) {
+		t.Fatalf("unexpected open term: got %s want %s", saved.OpenTerm, lecture.OpenTerm)
+	}
+	if saved.UpdatedAt.IsZero() {
+		t.Fatalf("expected updated_at to be stored")
+	}
+	if !saved.UpdatedAt.Equal(lecture.UpdatedAt) {
+		t.Fatalf("unexpected updated_at: got %v want %v", saved.UpdatedAt, lecture.UpdatedAt)
 	}
 }
 
@@ -388,6 +406,7 @@ func seedLectureAggregate(t *testing.T, db *sql.DB) {
 		"Office Hours",
 		"Notes",
 	)
+	mustExec(t, db, `UPDATE lectures SET open_term = ?, updated_at = ? WHERE id = ?`, "2025 3Q", "2025-03-19", 1)
 
 	mustExec(t, db, `INSERT INTO lectures (id, university, title) VALUES (?, ?, ?)`, 2, "Test University", "Supporting Course")
 

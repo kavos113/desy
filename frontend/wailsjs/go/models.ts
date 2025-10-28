@@ -95,6 +95,7 @@ export namespace domain {
 	    Level: number;
 	    Credit: number;
 	    Year: number;
+	    OpenTerm: string;
 	    Language: string;
 	    Url: string;
 	    Abstract: string;
@@ -109,6 +110,8 @@ export namespace domain {
 	    Contact: string;
 	    OfficeHours: string;
 	    Note: string;
+	    // Go type: time
+	    UpdatedAt: any;
 	    Timetables: TimeTable[];
 	    Teachers: Teacher[];
 	    LecturePlans: LecturePlan[];
@@ -132,6 +135,7 @@ export namespace domain {
 	        this.Level = source["Level"];
 	        this.Credit = source["Credit"];
 	        this.Year = source["Year"];
+	        this.OpenTerm = source["OpenTerm"];
 	        this.Language = source["Language"];
 	        this.Url = source["Url"];
 	        this.Abstract = source["Abstract"];
@@ -146,6 +150,7 @@ export namespace domain {
 	        this.Contact = source["Contact"];
 	        this.OfficeHours = source["OfficeHours"];
 	        this.Note = source["Note"];
+	        this.UpdatedAt = this.convertValues(source["UpdatedAt"], null);
 	        this.Timetables = this.convertValues(source["Timetables"], TimeTable);
 	        this.Teachers = this.convertValues(source["Teachers"], Teacher);
 	        this.LecturePlans = this.convertValues(source["LecturePlans"], LecturePlan);

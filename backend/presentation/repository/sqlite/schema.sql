@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS lectures (
     level INTEGER,
     credit INTEGER,
     year INTEGER,
+    open_term TEXT,
     language TEXT,
     url TEXT,
     abstract TEXT,
@@ -22,7 +23,8 @@ CREATE TABLE IF NOT EXISTS lectures (
     prerequisite TEXT,
     contact TEXT,
     office_hours TEXT,
-    note TEXT
+    note TEXT,
+    updated_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS teachers (

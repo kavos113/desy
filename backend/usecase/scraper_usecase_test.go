@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/kavos113/desy/backend/domain"
 	"github.com/kavos113/desy/backend/presentation/repository/sqlite"
@@ -46,6 +47,13 @@ func TestScraperUsecaseScrapeCourseDetailAndSave(t *testing.T) {
 	if lecture.EnglishTitle != "Constitutional Law A" {
 		t.Fatalf("unexpected english title: %s", lecture.EnglishTitle)
 	}
+	if lecture.OpenTerm != "2025 3Q" {
+		t.Fatalf("unexpected open term: %s", lecture.OpenTerm)
+	}
+	expectedUpdated := time.Date(2025, time.March, 19, 0, 0, 0, 0, time.UTC)
+	if !lecture.UpdatedAt.Equal(expectedUpdated) {
+		t.Fatalf("unexpected updated_at: %v", lecture.UpdatedAt)
+	}
 
 	stored, err := repo.FindByID(lecture.ID)
 	if err != nil {
@@ -62,6 +70,12 @@ func TestScraperUsecaseScrapeCourseDetailAndSave(t *testing.T) {
 	}
 	if stored.EnglishTitle != "Constitutional Law A" {
 		t.Fatalf("unexpected stored english title: %s", stored.EnglishTitle)
+	}
+	if stored.OpenTerm != "2025 3Q" {
+		t.Fatalf("unexpected stored open term: %s", stored.OpenTerm)
+	}
+	if !stored.UpdatedAt.Equal(expectedUpdated) {
+		t.Fatalf("unexpected stored updated_at: %v", stored.UpdatedAt)
 	}
 }
 
@@ -80,6 +94,10 @@ func TestScraperUsecaseScrapeCourseListAndSave(t *testing.T) {
     <tr>
       <td>LAH.S101</td>
       <td><a href="/courses/2025/LAH.S101">法学（憲法）Ａ</a></td>
+				<td>篠島 正幸</td>
+				<td>文系教養科目</td>
+				<td>2025 3Q</td>
+				<td>2025/3/19</td>
     </tr>
   </tbody>
 </table>
@@ -111,6 +129,12 @@ func TestScraperUsecaseScrapeCourseListAndSave(t *testing.T) {
 	if lectures[0].EnglishTitle != "Constitutional Law A" {
 		t.Fatalf("unexpected english title: %s", lectures[0].EnglishTitle)
 	}
+	if lectures[0].OpenTerm != "2025 3Q" {
+		t.Fatalf("unexpected open term: %s", lectures[0].OpenTerm)
+	}
+	if lectures[0].UpdatedAt.IsZero() {
+		t.Fatalf("expected updated_at to be captured")
+	}
 
 	stored, err := repo.FindByID(lectures[0].ID)
 	if err != nil {
@@ -127,6 +151,15 @@ func TestScraperUsecaseScrapeCourseListAndSave(t *testing.T) {
 	}
 	if stored.EnglishTitle != "Constitutional Law A" {
 		t.Fatalf("unexpected stored english title: %s", stored.EnglishTitle)
+	}
+	if stored.OpenTerm != "2025 3Q" {
+		t.Fatalf("unexpected stored open term: %s", stored.OpenTerm)
+	}
+	if stored.UpdatedAt.IsZero() {
+		t.Fatalf("expected stored updated_at")
+	}
+	if !stored.UpdatedAt.Equal(lectures[0].UpdatedAt) {
+		t.Fatalf("unexpected stored updated_at: %v", stored.UpdatedAt)
 	}
 	if len(reporter.events) != 2 {
 		t.Fatalf("unexpected number of progress events: %d", len(reporter.events))
@@ -150,6 +183,52 @@ func TestScraperUsecaseScrapeCourseListAndSave(t *testing.T) {
 	}
 	if update.Title != "法学（憲法）Ａ" {
 		t.Fatalf("unexpected progress title: %s", update.Title)
+	}
+}
+
+func TestScraperUsecaseScrapeCourseListAndSaveSkipsUnchanged(t *testing.T) {
+	repo, _ := newUsecaseTestRepository(t)
+
+	parser := scraper.NewParser()
+	lecture, err := parser.ParseCourseDetail(strings.NewReader(readFixture(t, "course_detail.html")), "https://example.com/courses/2025/LAH.S101")
+	if err != nil {
+		t.Fatalf("parse detail fixture: %v", err)
+	}
+	if err := repo.Create(lecture); err != nil {
+		t.Fatalf("seed lecture: %v", err)
+	}
+
+	listURL := "https://example.com/list"
+	baseURL := "https://example.com"
+
+	listHTML := `
+<html><body>
+<table class="c-table">
+  <tbody>
+    <tr>
+      <td>LAH.S101</td>
+      <td><a href="/courses/2025/LAH.S101">法学（憲法）Ａ</a></td>
+      <td>篠島 正幸</td>
+      <td>文系教養科目</td>
+      <td>2025 3Q</td>
+      <td>2025/3/19</td>
+    </tr>
+  </tbody>
+</table>
+</body></html>`
+
+	fetcher := newMockFetcher(map[string]string{
+		listURL: listHTML,
+	})
+
+	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser(), 0)
+
+	lectures, err := usecase.ScrapeCourseListAndSave(context.Background(), listURL, baseURL)
+	if err != nil {
+		t.Fatalf("ScrapeCourseListAndSave returned error: %v", err)
+	}
+	if len(lectures) != 0 {
+		t.Fatalf("expected no new lectures, got %d", len(lectures))
 	}
 }
 

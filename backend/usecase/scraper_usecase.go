@@ -153,7 +153,16 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 		}
 		firstFetch = false
 
+		existing, err := uc.lectureRepo.FindByCode(item.Code)
+		if err != nil {
+			return nil, fmt.Errorf("find lecture by code %s: %w", item.Code, err)
+		}
+
 		uc.reportProgress(ScrapeProgress{Total: total, Current: idx + 1, Code: strings.TrimSpace(item.Code), Title: strings.TrimSpace(item.Title)})
+
+		if shouldSkipLecture(existing, item) {
+			continue
+		}
 
 		lecture, err := uc.ScrapeCourseDetail(ctx, detailURL)
 		if err != nil {
@@ -168,6 +177,10 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 		if lecture.Title == "" {
 			lecture.Title = item.Title
 		}
+		if openTerm := strings.TrimSpace(item.OpenTerm); openTerm != "" {
+			lecture.OpenTerm = openTerm
+		}
+		lecture.UpdatedAt = normalizeDate(selectUpdatedAt(lecture.UpdatedAt, item.UpdatedAt))
 		lectures = append(lectures, *lecture)
 	}
 
@@ -219,6 +232,8 @@ func (uc *scraperUsecase) ScrapeCourseDetail(ctx context.Context, detailURL stri
 		}
 	}
 
+	lecture.UpdatedAt = normalizeDate(lecture.UpdatedAt)
+
 	return lecture, nil
 }
 
@@ -235,6 +250,7 @@ func (uc *scraperUsecase) ScrapeCourseDetailAndSave(ctx context.Context, detailU
 	if lecture == nil {
 		return nil, errors.New("scraped lecture is nil")
 	}
+	lecture.UpdatedAt = normalizeDate(lecture.UpdatedAt)
 
 	if err := uc.lectureRepo.Create(lecture); err != nil {
 		return nil, err
@@ -349,4 +365,56 @@ func (uc *scraperUsecase) reportProgress(progress ScrapeProgress) {
 		return
 	}
 	uc.reporter.Report(progress)
+}
+
+func shouldSkipLecture(existing *domain.Lecture, item scraper.CourseListItem) bool {
+	if existing == nil {
+		return false
+	}
+
+	if normalizeComparable(existing.Title) != normalizeComparable(item.Title) {
+		return false
+	}
+	if normalizeComparable(existing.Code) != normalizeComparable(item.Code) {
+		return false
+	}
+	if normalizeComparable(existing.OpenTerm) != normalizeComparable(item.OpenTerm) {
+		return false
+	}
+	if !sameDate(existing.UpdatedAt, item.UpdatedAt) {
+		return false
+	}
+
+	return true
+}
+
+func normalizeComparable(value string) string {
+	if value == "" {
+		return ""
+	}
+	return strings.TrimSpace(strings.Join(strings.Fields(value), " "))
+}
+
+func sameDate(a, b time.Time) bool {
+	if a.IsZero() && b.IsZero() {
+		return true
+	}
+	if a.IsZero() || b.IsZero() {
+		return false
+	}
+	return normalizeDate(a).Equal(normalizeDate(b))
+}
+
+func normalizeDate(t time.Time) time.Time {
+	if t.IsZero() {
+		return time.Time{}
+	}
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+func selectUpdatedAt(detail, list time.Time) time.Time {
+	if !list.IsZero() {
+		return list
+	}
+	return detail
 }

@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/kavos113/desy/backend/domain"
@@ -18,6 +19,8 @@ type CourseListItem struct {
 	Code      string
 	Title     string
 	DetailURL string
+	OpenTerm  string
+	UpdatedAt time.Time
 }
 
 // ParseCourseList extracts course metadata and detail links from a course list HTML document.
@@ -65,7 +68,20 @@ func ParseCourseList(r io.Reader, base string) ([]CourseListItem, error) {
 		}
 
 		title := strings.TrimSpace(normalizeWhitespace(selectionToText(link)))
-		items = append(items, CourseListItem{Code: code, Title: title, DetailURL: detail})
+
+		item := CourseListItem{
+			Code:      code,
+			Title:     title,
+			DetailURL: detail,
+		}
+		if cols.Length() > 4 {
+			item.OpenTerm = strings.TrimSpace(selectionToText(cols.Eq(4)))
+		}
+		if cols.Length() > 5 {
+			item.UpdatedAt = parseSyllabusDate(selectionToText(cols.Eq(5)))
+		}
+
+		items = append(items, item)
 	})
 
 	return items, nil
@@ -95,6 +111,10 @@ func ParseCourseDetail(r io.Reader, detailURL string) (*domain.Lecture, error) {
 	lecture.Year = parseFirstInt(extractDefinition(doc, "開講時期"))
 	quarter := extractDefinition(doc, "開講クォーター")
 	lecture.Language = extractDefinition(doc, "使用言語")
+	lecture.UpdatedAt = parseSyllabusDate(extractDefinition(doc, "シラバス更新日"))
+	if lecture.OpenTerm == "" && lecture.Year != 0 && strings.TrimSpace(quarter) != "" {
+		lecture.OpenTerm = fmt.Sprintf("%d %s", lecture.Year, strings.TrimSpace(quarter))
+	}
 
 	lecture.Abstract = extractSectionText(doc, "授業の目的（ねらい）、概要")
 	lecture.Goal = extractSectionText(doc, "到達目標")
@@ -354,6 +374,36 @@ func parseLevelFromCode(code string) domain.Level {
 	default:
 		return 0
 	}
+}
+
+func parseSyllabusDate(raw string) time.Time {
+	trimmed := strings.TrimSpace(normalizeWhitespace(raw))
+	if trimmed == "" {
+		return time.Time{}
+	}
+
+	replacer := strings.NewReplacer(
+		"年", "/",
+		"月", "/",
+		"日", "",
+		"-", "/",
+		".", "/",
+	)
+	normalized := strings.TrimSpace(replacer.Replace(trimmed))
+
+	layouts := []string{
+		"2006/1/2",
+		"2006/01/02",
+		"2006-01-02",
+	}
+
+	for _, layout := range layouts {
+		if parsed, err := time.ParseInLocation(layout, normalized, time.UTC); err == nil {
+			return time.Date(parsed.Year(), parsed.Month(), parsed.Day(), 0, 0, 0, 0, time.UTC)
+		}
+	}
+
+	return time.Time{}
 }
 
 func parseKeywords(raw string) []string {

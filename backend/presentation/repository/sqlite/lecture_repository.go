@@ -6,12 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/kavos113/desy/backend/domain"
 )
 
 // ErrNotImplemented indicates that the repository operation is not yet implemented.
 var ErrNotImplemented = errors.New("not implemented")
+
+const lectureDateLayout = "2006-01-02"
 
 // LectureRepository provides SQLite backed access to lecture aggregates.
 type LectureRepository struct {
@@ -42,21 +45,22 @@ func (r *LectureRepository) FindByID(id int) (*domain.Lecture, error) {
 		return nil, fmt.Errorf("invalid lecture id: %d", id)
 	}
 
-	const query = `SELECT id, university, title, english_title, department, lecture_type, code, level, credit, year, language, url, abstract, goal, experience, flow, out_of_class_work, textbook, reference_book, assessment, prerequisite, contact, office_hours, note FROM lectures WHERE id = ?`
+	const query = `SELECT id, university, title, english_title, department, lecture_type, code, level, credit, year, open_term, language, url, abstract, goal, experience, flow, out_of_class_work, textbook, reference_book, assessment, prerequisite, contact, office_hours, note, updated_at FROM lectures WHERE id = ?`
 
 	row := r.db.QueryRow(query, id)
 
 	var (
-		lecture                       domain.Lecture
-		englishTitle, department      sql.NullString
-		lectureType, language         sql.NullString
-		url, abstractText             sql.NullString
-		goal, experience              sql.NullString
-		flow, outOfClassWork          sql.NullString
-		textbook, referenceBook       sql.NullString
-		assessment, prerequisite      sql.NullString
-		contact, officeHours, note    sql.NullString
-		levelValue, creditValue, year sql.NullInt64
+		lecture                         domain.Lecture
+		englishTitle, department        sql.NullString
+		lectureType, openTerm, language sql.NullString
+		url, abstractText               sql.NullString
+		goal, experience                sql.NullString
+		flow, outOfClassWork            sql.NullString
+		textbook, referenceBook         sql.NullString
+		assessment, prerequisite        sql.NullString
+		contact, officeHours, note      sql.NullString
+		levelValue, creditValue, year   sql.NullInt64
+		updatedAtValue                  sql.NullString
 	)
 
 	err := row.Scan(
@@ -70,6 +74,7 @@ func (r *LectureRepository) FindByID(id int) (*domain.Lecture, error) {
 		&levelValue,
 		&creditValue,
 		&year,
+		&openTerm,
 		&language,
 		&url,
 		&abstractText,
@@ -84,6 +89,7 @@ func (r *LectureRepository) FindByID(id int) (*domain.Lecture, error) {
 		&contact,
 		&officeHours,
 		&note,
+		&updatedAtValue,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
@@ -109,6 +115,9 @@ func (r *LectureRepository) FindByID(id int) (*domain.Lecture, error) {
 	}
 	if year.Valid {
 		lecture.Year = int(year.Int64)
+	}
+	if openTerm.Valid {
+		lecture.OpenTerm = strings.TrimSpace(openTerm.String)
 	}
 	if language.Valid {
 		lecture.Language = language.String
@@ -152,6 +161,11 @@ func (r *LectureRepository) FindByID(id int) (*domain.Lecture, error) {
 	if note.Valid {
 		lecture.Note = note.String
 	}
+	if updatedAtValue.Valid {
+		if parsed, err := time.ParseInLocation(lectureDateLayout, updatedAtValue.String, time.UTC); err == nil {
+			lecture.UpdatedAt = parsed
+		}
+	}
 
 	timetables, err := r.fetchTimetablesMap([]int{lecture.ID})
 	if err != nil {
@@ -193,6 +207,25 @@ func (r *LectureRepository) FindByID(id int) (*domain.Lecture, error) {
 	lecture.RelatedCourseCodes = codes
 
 	return &lecture, nil
+}
+
+// FindByCode retrieves a lecture aggregate by its course code.
+func (r *LectureRepository) FindByCode(code string) (*domain.Lecture, error) {
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return nil, fmt.Errorf("invalid lecture code: %q", code)
+	}
+
+	var id int
+	err := r.db.QueryRow(`SELECT id FROM lectures WHERE UPPER(code) = ? LIMIT 1`, strings.ToUpper(code)).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("select lecture id by code: %w", err)
+	}
+
+	return r.FindByID(id)
 }
 
 // Search retrieves lecture summaries filtered by the provided query fields.
@@ -343,6 +376,8 @@ func (r *LectureRepository) Create(lecture *domain.Lecture) error {
 	lecture.Timetables = copies[0].Timetables
 	lecture.LecturePlans = copies[0].LecturePlans
 	lecture.Keywords = copies[0].Keywords
+	lecture.OpenTerm = copies[0].OpenTerm
+	lecture.UpdatedAt = copies[0].UpdatedAt
 	lecture.RelatedCourseCodes = copies[0].RelatedCourseCodes
 	lecture.RelatedCourses = copies[0].RelatedCourses
 
@@ -356,6 +391,10 @@ func (r *LectureRepository) Creates(lectures []domain.Lecture) error {
 	}
 
 	for idx := range lectures {
+		lectures[idx].OpenTerm = strings.TrimSpace(lectures[idx].OpenTerm)
+		if !lectures[idx].UpdatedAt.IsZero() {
+			lectures[idx].UpdatedAt = time.Date(lectures[idx].UpdatedAt.Year(), lectures[idx].UpdatedAt.Month(), lectures[idx].UpdatedAt.Day(), 0, 0, 0, 0, time.UTC)
+		}
 		lectures[idx].RelatedCourseCodes = sanitizeRelatedCourseCodes(lectures[idx].RelatedCourseCodes)
 	}
 
@@ -808,7 +847,7 @@ func (r *LectureRepository) insertLectureTx(tx *sql.Tx, lecture *domain.Lecture)
 		return 0, errors.New("lecture title is required")
 	}
 
-	const insertLecture = `INSERT INTO lectures (university, title, english_title, department, lecture_type, code, level, credit, year, language, url, abstract, goal, experience, flow, out_of_class_work, textbook, reference_book, assessment, prerequisite, contact, office_hours, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	const insertLecture = `INSERT INTO lectures (university, title, english_title, department, lecture_type, code, level, credit, year, open_term, language, url, abstract, goal, experience, flow, out_of_class_work, textbook, reference_book, assessment, prerequisite, contact, office_hours, note, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := tx.Exec(insertLecture,
 		strings.TrimSpace(lecture.University),
@@ -820,6 +859,7 @@ func (r *LectureRepository) insertLectureTx(tx *sql.Tx, lecture *domain.Lecture)
 		nullInt(int(lecture.Level)),
 		nullInt(lecture.Credit),
 		nullInt(lecture.Year),
+		nullString(lecture.OpenTerm),
 		nullString(lecture.Language),
 		nullString(lecture.Url),
 		nullString(lecture.Abstract),
@@ -834,6 +874,7 @@ func (r *LectureRepository) insertLectureTx(tx *sql.Tx, lecture *domain.Lecture)
 		nullString(lecture.Contact),
 		nullString(lecture.OfficeHours),
 		nullString(lecture.Note),
+		nullDate(lecture.UpdatedAt),
 	)
 	if err != nil {
 		return 0, fmt.Errorf("insert lecture: %w", err)
@@ -1205,6 +1246,14 @@ func nullInt(value int) sql.NullInt64 {
 		return sql.NullInt64{Valid: false}
 	}
 	return sql.NullInt64{Int64: int64(value), Valid: true}
+}
+
+func nullDate(value time.Time) sql.NullString {
+	if value.IsZero() {
+		return sql.NullString{Valid: false}
+	}
+	canonical := time.Date(value.Year(), value.Month(), value.Day(), 0, 0, 0, 0, time.UTC)
+	return sql.NullString{String: canonical.Format(lectureDateLayout), Valid: true}
 }
 
 func placeholders(count int) string {
