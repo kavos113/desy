@@ -11,6 +11,7 @@ import (
 	"github.com/kavos113/desy/backend/presentation/repository/sqlite"
 	"github.com/kavos113/desy/backend/presentation/scraper"
 	"github.com/kavos113/desy/backend/usecase"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	_ "modernc.org/sqlite"
 )
@@ -65,6 +66,8 @@ func (a *App) Scrape() error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	cleanup := a.attachProgressReporter(ctx)
+	defer cleanup()
 
 	_, err := a.scraperUsecase.ScrapeTopPageAndSave(ctx, time.Now().Year())
 	return err
@@ -80,6 +83,8 @@ func (a *App) ScrapeTest() error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	cleanup := a.attachProgressReporter(ctx)
+	defer cleanup()
 
 	_, err := a.scraperUsecase.ScrapeCourseListAndSave(ctx, testURL, scraper.TopPageURL)
 	return err
@@ -105,4 +110,26 @@ func (a *App) shutdown(context.Context) {
 	if a.db != nil {
 		_ = a.db.Close()
 	}
+}
+
+func (a *App) attachProgressReporter(ctx context.Context) func() {
+	if a.scraperUsecase == nil || ctx == nil {
+		return func() {}
+	}
+	reporter := &wailsProgressReporter{ctx: ctx}
+	a.scraperUsecase.SetProgressReporter(reporter)
+	return func() {
+		a.scraperUsecase.SetProgressReporter(nil)
+	}
+}
+
+type wailsProgressReporter struct {
+	ctx context.Context
+}
+
+func (r *wailsProgressReporter) Report(progress usecase.ScrapeProgress) {
+	if r == nil || r.ctx == nil {
+		return
+	}
+	runtime.EventsEmit(r.ctx, "fetch_status", progress)
 }

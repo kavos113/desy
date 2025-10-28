@@ -133,7 +133,11 @@ func AddEnglishTitle(r io.Reader, lecture *domain.Lecture) error {
 		return fmt.Errorf("parse course detail html for english title: %w", err)
 	}
 
-	lecture.EnglishTitle = strings.TrimSpace(doc.Find("h1.c-h1").First().Text())
+	title := normalizeWhitespace(doc.Find("h1.c-h1").First().Text())
+	if title == "" {
+		return nil
+	}
+	lecture.EnglishTitle = title
 	return nil
 }
 

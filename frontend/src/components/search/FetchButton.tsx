@@ -6,9 +6,59 @@ import { EventsOn } from "../../../wailsjs/runtime/runtime";
 
 const DEFAULT_STATUS = "Not fetched";
 
-type FetchStatusEventPayload = unknown;
+type ScrapeProgressPayload = {
+  total?: number;
+  current?: number;
+  code?: string;
+  title?: string;
+  Total?: number;
+  Current?: number;
+  Code?: string;
+  Title?: string;
+};
+
+type FetchStatusEventPayload = ScrapeProgressPayload | string | number | null | undefined;
 
 type Unsubscribe = () => void;
+
+const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
+
+const normalizeProgress = (payload: ScrapeProgressPayload): { total: number; current: number; code?: string; title?: string } | null => {
+  if (!isObject(payload)) {
+    return null;
+  }
+
+  const totalValue = payload.total ?? payload.Total;
+  if (typeof totalValue !== "number" || Number.isNaN(totalValue)) {
+    return null;
+  }
+
+  const currentValue = payload.current ?? payload.Current;
+  const current = typeof currentValue === "number" && !Number.isNaN(currentValue) ? currentValue : 0;
+  const code = (payload.code ?? payload.Code) || undefined;
+  const title = (payload.title ?? payload.Title) || undefined;
+
+  return {
+    total: Math.max(0, totalValue),
+    current: Math.max(0, current),
+    code: typeof code === "string" && code.trim().length > 0 ? code.trim() : undefined,
+    title: typeof title === "string" && title.trim().length > 0 ? title.trim() : undefined,
+  };
+};
+
+const formatProgressStatus = (progress: { total: number; current: number; code?: string; title?: string }): string => {
+  const { total, current, code, title } = progress;
+  const safeTotal = total > 0 ? total : 0;
+  const safeCurrent = current > 0 ? current : 0;
+  const parts = [`${safeCurrent} / ${safeTotal}`];
+  if (code) {
+    parts.push(code);
+  }
+  if (title) {
+    parts.push(title);
+  }
+  return parts.join(" ");
+};
 
 const FetchButton = () => {
   const [status, setStatus] = useState(DEFAULT_STATUS);
@@ -19,7 +69,16 @@ const FetchButton = () => {
 
     try {
       const result = EventsOn("fetch_status", (payload: FetchStatusEventPayload) => {
-        setStatus(String(payload));
+        if (isObject(payload)) {
+          const progress = normalizeProgress(payload as ScrapeProgressPayload);
+          if (progress) {
+            setStatus(formatProgressStatus(progress));
+            return;
+          }
+        }
+        if (payload !== undefined && payload !== null) {
+          setStatus(String(payload));
+        }
       });
 
       if (typeof result === "function") {
@@ -39,7 +98,6 @@ const FetchButton = () => {
     setStatus("Fetching...");
     try {
       await Scrape();
-      setStatus("Fetched");
     } catch (error) {
       console.error("Scrape failed", error);
       setStatus("Fetch failed");
@@ -53,7 +111,6 @@ const FetchButton = () => {
     setStatus("Fetch-Test...");
     try {
       await ScrapeTest();
-      setStatus("Fetch-Test Completed");
     } catch (error) {
       console.error("Scrape failed", error);
       setStatus("Fetch-Test failed");

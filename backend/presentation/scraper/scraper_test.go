@@ -473,3 +473,19 @@ func TestParseCourseDetail(t *testing.T) {
 		})
 	}
 }
+
+func TestAddEnglishTitle(t *testing.T) {
+	file, err := os.Open("fixture/course_detail_en.html")
+	if err != nil {
+		t.Fatalf("open course detail english fixture: %v", err)
+	}
+	defer file.Close()
+
+	lecture := &domain.Lecture{}
+	if err := AddEnglishTitle(file, lecture); err != nil {
+		t.Fatalf("AddEnglishTitle returned error: %v", err)
+	}
+	if lecture.EnglishTitle != "Constitutional Law A" {
+		t.Fatalf("unexpected english title: %s", lecture.EnglishTitle)
+	}
+}

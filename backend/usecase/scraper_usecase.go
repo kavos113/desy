@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"strings"
 	"time"
 
@@ -20,6 +21,19 @@ type Fetcher interface {
 	Fetch(ctx context.Context, url string) (io.ReadCloser, error)
 }
 
+// ScrapeProgress describes the current scraping status.
+type ScrapeProgress struct {
+	Total   int
+	Current int
+	Code    string
+	Title   string
+}
+
+// ScrapeProgressReporter receives updates while scraping progresses.
+type ScrapeProgressReporter interface {
+	Report(ScrapeProgress)
+}
+
 // ScraperUsecase orchestrates scraping workflow and persistence.
 type ScraperUsecase interface {
 	ScrapeCourseList(ctx context.Context, listURL, baseURL string) ([]scraper.CourseListItem, error)
@@ -27,6 +41,7 @@ type ScraperUsecase interface {
 	ScrapeCourseDetail(ctx context.Context, detailURL string) (*domain.Lecture, error)
 	ScrapeCourseDetailAndSave(ctx context.Context, detailURL string) (*domain.Lecture, error)
 	ScrapeTopPageAndSave(ctx context.Context, year int) ([]domain.Lecture, error)
+	SetProgressReporter(ScrapeProgressReporter)
 }
 
 type scraperUsecase struct {
@@ -34,6 +49,7 @@ type scraperUsecase struct {
 	lectureRepo domain.LectureRepository
 	parser      scraper.Parser
 	delay       time.Duration
+	reporter    ScrapeProgressReporter
 }
 
 // NewScraperUsecase constructs a scraper usecase instance.
@@ -50,6 +66,11 @@ func NewScraperUsecase(fetcher Fetcher, lectureRepo domain.LectureRepository, pa
 		parser:      parser,
 		delay:       delay,
 	}
+}
+
+// SetProgressReporter registers a progress reporter to receive scraping updates.
+func (uc *scraperUsecase) SetProgressReporter(reporter ScrapeProgressReporter) {
+	uc.reporter = reporter
 }
 
 // ScrapeCourseList retrieves course list entries from the specified URL.
@@ -87,18 +108,13 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 		return nil, err
 	}
 	if len(items) == 0 {
+		uc.reportProgress(ScrapeProgress{Total: 0})
 		return []domain.Lecture{}, nil
 	}
 
-	lectures := make([]domain.Lecture, 0, len(items))
-	seen := make(map[string]struct{})
-	firstFetch := true
-
+	uniqueItems := make([]scraper.CourseListItem, 0, len(items))
+	seen := make(map[string]struct{}, len(items))
 	for _, item := range items {
-		if ctx != nil && ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-
 		detailURL := strings.TrimSpace(item.DetailURL)
 		if detailURL == "" {
 			continue
@@ -107,7 +123,27 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 			continue
 		}
 		seen[detailURL] = struct{}{}
+		item.DetailURL = detailURL
+		uniqueItems = append(uniqueItems, item)
+	}
 
+	total := len(uniqueItems)
+	if total == 0 {
+		uc.reportProgress(ScrapeProgress{Total: 0})
+		return []domain.Lecture{}, nil
+	}
+
+	uc.reportProgress(ScrapeProgress{Total: total})
+
+	lectures := make([]domain.Lecture, 0, total)
+	firstFetch := true
+
+	for idx, item := range uniqueItems {
+		if ctx != nil && ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+
+		detailURL := item.DetailURL
 		log.Printf("Scraping detail page: %s %s", item.Code, item.Title)
 
 		if !firstFetch {
@@ -116,6 +152,8 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 			}
 		}
 		firstFetch = false
+
+		uc.reportProgress(ScrapeProgress{Total: total, Current: idx + 1, Code: strings.TrimSpace(item.Code), Title: strings.TrimSpace(item.Title)})
 
 		lecture, err := uc.ScrapeCourseDetail(ctx, detailURL)
 		if err != nil {
@@ -168,14 +206,16 @@ func (uc *scraperUsecase) ScrapeCourseDetail(ctx context.Context, detailURL stri
 	time.Sleep(1 * time.Second)
 
 	// english title
-	englishURL := fmt.Sprintf("%s?hl=en", detailURL)
-	engReader, err := uc.fetcher.Fetch(ctx, englishURL)
-	if err != nil {
-		log.Printf("fetch english title %s: %v", englishURL, err)
-	} else {
-		defer engReader.Close()
-		if err := uc.parser.AddEnglishTitle(engReader, lecture); err != nil {
-			log.Printf("add english title from %s: %v", englishURL, err)
+	englishURL := buildEnglishDetailURL(detailURL)
+	if englishURL != "" {
+		engReader, err := uc.fetcher.Fetch(ctx, englishURL)
+		if err != nil {
+			log.Printf("fetch english title %s: %v", englishURL, err)
+		} else {
+			defer engReader.Close()
+			if err := uc.parser.AddEnglishTitle(engReader, lecture); err != nil {
+				log.Printf("add english title from %s: %v", englishURL, err)
+			}
 		}
 	}
 
@@ -280,4 +320,29 @@ func (uc *scraperUsecase) sleep(ctx context.Context) error {
 	case <-timer.C:
 		return nil
 	}
+}
+
+func buildEnglishDetailURL(detailURL string) string {
+	detailURL = strings.TrimSpace(detailURL)
+	if detailURL == "" {
+		return ""
+	}
+	u, err := url.Parse(detailURL)
+	if err != nil {
+		if strings.Contains(detailURL, "?") {
+			return detailURL + "&hl=en"
+		}
+		return detailURL + "?hl=en"
+	}
+	query := u.Query()
+	query.Set("hl", "en")
+	u.RawQuery = query.Encode()
+	return u.String()
+}
+
+func (uc *scraperUsecase) reportProgress(progress ScrapeProgress) {
+	if uc.reporter == nil {
+		return
+	}
+	uc.reporter.Report(progress)
 }
