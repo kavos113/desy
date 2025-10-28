@@ -309,3 +309,37 @@
 .lecturerText {
   margin-right: 0.5rem;
 }
+
+.course-related-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.course-related-link {
+  background: none;
+  border: none;
+  color: var(--stmain);
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.course-related-link:hover,
+.course-related-link:focus {
+  text-decoration: underline;
+}
+
+.course-related-link:disabled {
+  cursor: default;
+  color: var(--3black, #000);
+  text-decoration: none;
+}
+
+.course-related-text {
+  color: inherit;
+}

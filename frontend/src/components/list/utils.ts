@@ -66,14 +66,6 @@ export function formatSemesters(
   return Array.from(new Set(labels)).join(", ");
 }
 
-export function formatRelatedCourses(courses: number[] | undefined): string {
-  if (!courses || courses.length === 0) {
-    return "";
-  }
-
-  return courses.map((course) => course.toString()).join(", ");
-}
-
 export function splitIntoLines(value: string | undefined | null): string[] {
   if (!value) {
     return [];

@@ -113,6 +113,7 @@ export namespace domain {
 	    Teachers: Teacher[];
 	    LecturePlans: LecturePlan[];
 	    Keywords: string[];
+	    RelatedCourseCodes: string[];
 	    RelatedCourses: number[];
 	
 	    static createFrom(source: any = {}) {
@@ -149,6 +150,7 @@ export namespace domain {
 	        this.Teachers = this.convertValues(source["Teachers"], Teacher);
 	        this.LecturePlans = this.convertValues(source["LecturePlans"], LecturePlan);
 	        this.Keywords = source["Keywords"];
+	        this.RelatedCourseCodes = source["RelatedCourseCodes"];
 	        this.RelatedCourses = source["RelatedCourses"];
 	    }
 	

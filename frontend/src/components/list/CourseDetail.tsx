@@ -1,19 +1,21 @@
 import { useMemo } from "react";
 import { domain } from "../../../wailsjs/go/models";
-import {
-  formatRelatedCourses,
-  formatSemesters,
-  formatTeachers,
-  formatTimetables,
-  splitIntoLines,
-} from "./utils";
+import { formatSemesters, formatTeachers, formatTimetables, splitIntoLines } from "./utils";
 import "./list.css";
 
 type CourseDetailProps = {
   lecture?: domain.Lecture | null;
+  relatedCourses?: RelatedCourseEntry[];
+  onSelectRelatedCourse?: (lectureId: number) => void;
 };
 
-const CourseDetail = ({ lecture }: CourseDetailProps) => {
+export type RelatedCourseEntry = {
+  code: string;
+  id?: number;
+  title?: string;
+};
+
+const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: CourseDetailProps) => {
   const teachers = useMemo(() => lecture?.Teachers ?? [], [lecture?.Teachers]);
   const teacherAnchors = teachers.map((teacher) => (
     <a key={teacher.ID} href={teacher.Url ?? undefined} className="lecturerText">
@@ -23,7 +25,6 @@ const CourseDetail = ({ lecture }: CourseDetailProps) => {
 
   const timetableText = useMemo(() => formatTimetables(lecture?.Timetables), [lecture?.Timetables]);
   const semesterText = useMemo(() => formatSemesters(lecture?.Timetables), [lecture?.Timetables]);
-  const relatedCourses = useMemo(() => formatRelatedCourses(lecture?.RelatedCourses), [lecture?.RelatedCourses]);
 
   const keywords = lecture?.Keywords ?? [];
 
@@ -40,6 +41,44 @@ const CourseDetail = ({ lecture }: CourseDetailProps) => {
   const renderList = (value?: string | null) => {
     const items = splitIntoLines(value);
     return items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>);
+  };
+
+  const renderRelatedCourses = () => {
+    if (!relatedCourses || relatedCourses.length === 0) {
+      return <p className="course-detail-text">関連科目の情報がありません。</p>;
+    }
+
+    return (
+      <ul className="course-related-list">
+        {relatedCourses.map((course) => {
+          const key = `${course.code}-${course.id ?? "text"}`;
+          const clickable = Boolean(course.id && onSelectRelatedCourse);
+          const label = course.title ? `${course.title} (${course.code})` : course.code;
+
+          if (clickable && course.id) {
+            return (
+              <li key={key}>
+                <button
+                  type="button"
+                  className="course-related-link"
+                  onClick={() => onSelectRelatedCourse?.(course.id!)}
+                >
+                  {label}
+                </button>
+              </li>
+            );
+          }
+
+          return (
+            <li key={key}>
+              <span className="course-related-text">
+                {course.title ? `${course.code} / ${course.title}` : course.code}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    );
   };
 
   if (!lecture) {
@@ -182,7 +221,7 @@ const CourseDetail = ({ lecture }: CourseDetailProps) => {
 
       <div className="course-detail-section">
         <h3>関連する科目</h3>
-        <p className="course-detail-text">{relatedCourses}</p>
+        {renderRelatedCourses()}
       </div>
 
       <div className="course-detail-section">
