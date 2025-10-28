@@ -145,6 +145,16 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 
 		detailURL := item.DetailURL
 		log.Printf("Scraping detail page: %s %s", item.Code, item.Title)
+		uc.reportProgress(ScrapeProgress{Total: total, Current: idx + 1, Code: strings.TrimSpace(item.Code), Title: strings.TrimSpace(item.Title)})
+
+		existing, err := uc.lectureRepo.FindByCode(item.Code)
+		if err != nil {
+			return nil, fmt.Errorf("find lecture by code %s: %w", item.Code, err)
+		}
+
+		if shouldSkipLecture(existing, item) {
+			continue
+		}
 
 		if !firstFetch {
 			if err := uc.sleep(ctx); err != nil {
@@ -152,17 +162,6 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 			}
 		}
 		firstFetch = false
-
-		existing, err := uc.lectureRepo.FindByCode(item.Code)
-		if err != nil {
-			return nil, fmt.Errorf("find lecture by code %s: %w", item.Code, err)
-		}
-
-		uc.reportProgress(ScrapeProgress{Total: total, Current: idx + 1, Code: strings.TrimSpace(item.Code), Title: strings.TrimSpace(item.Title)})
-
-		if shouldSkipLecture(existing, item) {
-			continue
-		}
 
 		lecture, err := uc.ScrapeCourseDetail(ctx, detailURL)
 		if err != nil {

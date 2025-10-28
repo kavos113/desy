@@ -749,11 +749,27 @@ func (r *LectureRepository) fetchLecturePlans(lectureID int) ([]domain.LecturePl
 
 	plans := make([]domain.LecturePlan, 0)
 	for rows.Next() {
-		var plan domain.LecturePlan
-		if err := rows.Scan(&plan.Count, &plan.Plan, &plan.Assignment); err != nil {
+		var (
+			count 	sql.NullInt64
+			plan sql.NullString
+			assignment sql.NullString
+		)
+		if err := rows.Scan(&count, &plan, &assignment); err != nil {
 			return nil, fmt.Errorf("scan lecture plan: %w", err)
 		}
-		plans = append(plans, plan)
+		
+		lp := domain.LecturePlan{}
+		if count.Valid {
+			lp.Count = int(count.Int64)
+		}
+		if plan.Valid {
+			lp.Plan = plan.String
+		}
+		if assignment.Valid {
+			lp.Assignment = assignment.String
+		}
+
+		plans = append(plans, lp)
 	}
 
 	if err := rows.Err(); err != nil {
