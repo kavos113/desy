@@ -10,11 +10,12 @@ import "./list.css";
 type ListTableProps = {
   items: domain.LectureSummary[];
   onSort?: (key: string) => void;
+  className?: string;
 };
 
 const CLOSE_DELAY_MS = 250;
 
-const ListTable = ({ items, onSort }: ListTableProps) => {
+const ListTable = ({ items, onSort, className }: ListTableProps) => {
   const [selectedLecture, setSelectedLecture] = useState<domain.Lecture | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isOverlayActive, setIsOverlayActive] = useState(false);
@@ -60,6 +61,10 @@ const ListTable = ({ items, onSort }: ListTableProps) => {
     };
   }, []);
 
+  const tableClassName = useMemo(() => {
+    return ["list-table", className].filter(Boolean).join(" ");
+  }, [className]);
+
   const detailPanelClassName = useMemo(() => {
     return ["detail-panel", isDetailOpen ? "active" : ""].filter(Boolean).join(" ");
   }, [isDetailOpen]);
@@ -73,7 +78,7 @@ const ListTable = ({ items, onSort }: ListTableProps) => {
   }, [isDetailOpen]);
 
   return (
-    <div className="list-table">
+    <div className={tableClassName}>
       <ListHeaderItem onSort={handleSort} />
       {items.length === 0 ? (
         <p>講義が見つかりませんでした。</p>
