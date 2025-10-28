@@ -335,14 +335,7 @@ func parseFirstInt(raw string) int {
 
 func parseCredit(raw string) int {
 	value := parseFirstInt(raw)
-	switch {
-	case value >= 100 && value%100 == 0:
-		return value / 100
-	case value >= 10 && value%10 == 0:
-		return value / 10
-	default:
-		return value
-	}
+	return value / 100 + value % 100 / 10 + value % 10
 }
 
 func parseLevelFromCode(code string) domain.Level {
