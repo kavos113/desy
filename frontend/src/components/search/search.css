@@ -1,0 +1,144 @@
+.search-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 77px;
+  flex-shrink: 0;
+}
+
+.search-wrapper .button {
+  width: 110px;
+}
+
+.search-wrapper .back {
+  display: none;
+}
+
+.fetch {
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .fetch {
+    display: none;
+  }
+
+  .search-wrapper .back {
+    display: block;
+  }
+
+  .search-wrapper {
+    background-color: var(--grayborder);
+    box-shadow: 0 0 20px 0 rgba(0, 0, 0, 1);
+    padding: 10px;
+  }
+}
+
+.button-wrapper {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 28px;
+}
+
+.fetch-status {
+  margin: 8px 0 0;
+}
+
+.search-box-wrapper {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.desktop {
+  display: block;
+}
+
+.mobile {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .desktop {
+    display: none;
+  }
+
+  .mobile {
+    display: block;
+  }
+}
+
+.search-conditions-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+  align-self: stretch;
+}
+
+.search-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 61px;
+  align-self: stretch;
+}
+
+.check-boxes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.timetable-container {
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+}
+
+.left {
+  width: 48px;
+  height: 24px;
+  background: var(--white);
+  border: 1px solid var(--ablack);
+}
+
+.mainContent {
+  width: 24px;
+  height: 24px;
+  background: var(--white);
+  border: 1px solid var(--ablack);
+}
+
+.day,
+.period,
+.box {
+  cursor: pointer;
+}
+
+.box:hover {
+  background: var(--stmain);
+  opacity: 0.3;
+}
+
+.checked {
+  background: var(--stmain);
+}
+
+.row:has(.period:hover) > .box {
+  background: var(--stmain);
+  opacity: 0.3;
+}
+
+.table:has(.day-月:hover) .box-月,
+.table:has(.day-火:hover) .box-火,
+.table:has(.day-水:hover) .box-水,
+.table:has(.day-木:hover) .box-木,
+.table:has(.day-金:hover) .box-金 {
+  background: var(--stmain);
+  opacity: 0.3;
+}

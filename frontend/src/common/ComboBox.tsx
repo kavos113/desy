@@ -7,9 +7,15 @@ type ComboBoxProps = {
   items: Menu;
   defaultSelectedItems?: string[];
   onSelectItem?: (selected: string[]) => void;
+  className?: string;
 };
 
-const ComboBox = ({ items, defaultSelectedItems, onSelectItem }: ComboBoxProps) => {
+const ComboBox = ({
+  items,
+  defaultSelectedItems,
+  onSelectItem,
+  className,
+}: ComboBoxProps) => {
   const [selectedItems, setSelectedItems] = useState<string[]>(() => {
     return defaultSelectedItems ? [...defaultSelectedItems] : [];
   });
@@ -37,7 +43,7 @@ const ComboBox = ({ items, defaultSelectedItems, onSelectItem }: ComboBoxProps) 
   };
 
   return (
-    <div className="combobox-box-container">
+    <div className={["combobox-box-container", className].filter(Boolean).join(" ")}>
       <div className="comboMenu">
         <ComboBoxMenu items={items} selectedKeys={selectedKeySet} onSelect={handleSelect} />
       </div>
