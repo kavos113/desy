@@ -236,6 +236,34 @@ func TestLectureRepositoryCreatePersistsAggregate(t *testing.T) {
 	}
 }
 
+func TestLectureRepositoryCreateResolvesRelatedCourses(t *testing.T) {
+	repo, db := newTestRepository(t)
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code) VALUES (?, ?, ?, ?)`, 100, "Test University", "Existing Course", "LAH.S201")
+
+	lecture := parseDetailFixture(t, "course_detail.html")
+
+	if err := repo.Create(lecture); err != nil {
+		t.Fatalf("Create returned error: %v", err)
+	}
+	if lecture.ID == 0 {
+		t.Fatalf("expected lecture ID to be assigned")
+	}
+
+	saved, err := repo.FindByID(lecture.ID)
+	if err != nil {
+		t.Fatalf("FindByID returned error: %v", err)
+	}
+	if saved == nil {
+		t.Fatalf("expected saved lecture")
+	}
+	if len(saved.RelatedCourses) == 0 {
+		t.Fatalf("expected related courses to be resolved")
+	}
+	if saved.RelatedCourses[0] != 100 {
+		t.Fatalf("unexpected related course id: %#v", saved.RelatedCourses)
+	}
+}
+
 func newTestRepository(t *testing.T) (*LectureRepository, *sql.DB) {
 	t.Helper()
 

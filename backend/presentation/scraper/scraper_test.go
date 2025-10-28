@@ -138,8 +138,9 @@ func TestParseCourseDetail(t *testing.T) {
 						Assignment: "憲法の条項",
 					},
 				},
-				Keywords:       []string{"憲法", "法律", "人権", "教養"},
-				RelatedCourses: []int{},
+				Keywords:           []string{"憲法", "法律", "人権", "教養"},
+				RelatedCourseCodes: []string{"LAH.S201", "LAH.S301", "LAH.S102"},
+				RelatedCourses:     []int{},
 			},
 		},
 		{
@@ -207,8 +208,9 @@ func TestParseCourseDetail(t *testing.T) {
 						Assignment: "憲法の条項",
 					},
 				},
-				Keywords:       []string{"憲法", "法律", "人権", "教養"},
-				RelatedCourses: []int{},
+				Keywords:           []string{"憲法", "法律", "人権", "教養"},
+				RelatedCourseCodes: []string{"LAH.S201", "LAH.S301", "LAH.S102"},
+				RelatedCourses:     []int{},
 			},
 		},
 		{
@@ -306,8 +308,9 @@ func TestParseCourseDetail(t *testing.T) {
 						Assignment: "",
 					},
 				},
-				Keywords:       []string{"憲法", "法律", "人権", "教養"},
-				RelatedCourses: []int{},
+				Keywords:           []string{"憲法", "法律", "人権", "教養"},
+				RelatedCourseCodes: []string{"LAH.S201", "LAH.S301", "LAH.S102"},
+				RelatedCourses:     []int{},
 			},
 		},
 	}
@@ -445,6 +448,16 @@ func TestParseCourseDetail(t *testing.T) {
 				expKeyword := tc.expected.Keywords[i]
 				if keyword != expKeyword {
 					t.Errorf("unexpected keyword at index %d: got %s, want %s", i, keyword, expKeyword)
+				}
+			}
+
+			if len(lecture.RelatedCourseCodes) != len(tc.expected.RelatedCourseCodes) {
+				t.Fatalf("unexpected number of related course codes: got %d, want %d", len(lecture.RelatedCourseCodes), len(tc.expected.RelatedCourseCodes))
+			}
+			for i, code := range lecture.RelatedCourseCodes {
+				expCode := tc.expected.RelatedCourseCodes[i]
+				if code != expCode {
+					t.Errorf("unexpected related course code at index %d: got %s, want %s", i, code, expCode)
 				}
 			}
 

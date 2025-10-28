@@ -113,6 +113,7 @@ func ParseCourseDetail(r io.Reader, detailURL string) (*domain.Lecture, error) {
 	lecture.Note = extractSectionText(doc, "その他")
 
 	lecture.Keywords = parseKeywords(extractSectionText(doc, "キーワード"))
+	lecture.RelatedCourseCodes = parseRelatedCourseCodes(doc)
 	lecture.LecturePlans = parseLecturePlans(doc)
 	lecture.Timetables = parseTimetables(extractDefinitionRaw(doc, "曜日・時限"), quarter)
 
@@ -279,6 +280,7 @@ func parseLectureType(raw string) domain.LectureType {
 }
 
 var numberRegexp = regexp.MustCompile(`(\d+)`)
+var courseCodePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9.\-]*`)
 
 func parseFirstInt(raw string) int {
 	if matches := numberRegexp.FindStringSubmatch(raw); len(matches) > 0 {
@@ -345,6 +347,68 @@ func parseKeywords(raw string) []string {
 		}
 	}
 	return keywords
+}
+
+func parseRelatedCourseCodes(doc *goquery.Document) []string {
+	if doc == nil {
+		return nil
+	}
+	codes := make([]string, 0)
+	doc.Find("h3.c-h3").EachWithBreak(func(_ int, h3 *goquery.Selection) bool {
+		if strings.TrimSpace(h3.Text()) != "関連する科目" {
+			return true
+		}
+		for s := h3.Next(); s.Length() > 0; s = s.Next() {
+			nodeName := goquery.NodeName(s)
+			if nodeName == "h3" {
+				break
+			}
+			if nodeName != "ul" {
+				continue
+			}
+			s.Find("li").Each(func(_ int, li *goquery.Selection) {
+				text := normalizeWhitespace(selectionToText(li))
+				code := extractCourseCode(text)
+				if code != "" {
+					codes = append(codes, code)
+				}
+			})
+			break
+		}
+		return false
+	})
+	if len(codes) == 0 {
+		return nil
+	}
+	return codes
+}
+
+func extractCourseCode(text string) string {
+	text = strings.TrimSpace(strings.ReplaceAll(text, "　", " "))
+	if text == "" {
+		return ""
+	}
+	for _, sep := range []string{"：", ":"} {
+		if idx := strings.Index(text, sep); idx != -1 {
+			text = text[:idx]
+			break
+		}
+	}
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return ""
+	}
+	if match := courseCodePattern.FindString(text); match != "" {
+		return strings.ToUpper(match)
+	}
+	fields := strings.Fields(text)
+	if len(fields) == 0 {
+		return ""
+	}
+	if match := courseCodePattern.FindString(fields[0]); match != "" {
+		return strings.ToUpper(match)
+	}
+	return ""
 }
 
 func splitList(raw string) []string {

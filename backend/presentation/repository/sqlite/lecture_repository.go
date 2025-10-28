@@ -338,6 +338,7 @@ func (r *LectureRepository) Create(lecture *domain.Lecture) error {
 	lecture.Timetables = copies[0].Timetables
 	lecture.LecturePlans = copies[0].LecturePlans
 	lecture.Keywords = copies[0].Keywords
+	lecture.RelatedCourseCodes = copies[0].RelatedCourseCodes
 	lecture.RelatedCourses = copies[0].RelatedCourses
 
 	return nil
@@ -356,6 +357,7 @@ func (r *LectureRepository) Creates(lectures []domain.Lecture) error {
 	}
 
 	insertedIDs := make([]int, len(lectures))
+	codeToID := make(map[string]int)
 
 	for idx := range lectures {
 		id, err := r.insertLectureTx(tx, &lectures[idx])
@@ -366,6 +368,59 @@ func (r *LectureRepository) Creates(lectures []domain.Lecture) error {
 			return err
 		}
 		insertedIDs[idx] = id
+
+		if code := normalizeCourseCode(lectures[idx].Code); code != "" {
+			if _, exists := codeToID[code]; !exists {
+				codeToID[code] = id
+			}
+		}
+	}
+
+	pendingCodes := make(map[string]struct{})
+	for _, lecture := range lectures {
+		for _, code := range lecture.RelatedCourseCodes {
+			normalized := normalizeCourseCode(code)
+			if normalized == "" {
+				continue
+			}
+			if _, ok := codeToID[normalized]; ok {
+				continue
+			}
+			pendingCodes[normalized] = struct{}{}
+		}
+	}
+
+	if len(pendingCodes) > 0 {
+		codes := make([]string, 0, len(pendingCodes))
+		for code := range pendingCodes {
+			codes = append(codes, code)
+		}
+		existing, err := r.findLectureIDsByCodesTx(tx, codes)
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				return fmt.Errorf("rollback on resolve related codes: %v (original error: %w)", rbErr, err)
+			}
+			return err
+		}
+		for code, id := range existing {
+			if _, exists := codeToID[code]; !exists {
+				codeToID[code] = id
+			}
+		}
+	}
+
+	for idx := range lectures {
+		lectureID := insertedIDs[idx]
+		relatedIDs := resolveRelatedCourseIDs(lectures[idx].RelatedCourseCodes, codeToID, lectureID)
+		if len(relatedIDs) > 0 {
+			if err := r.insertRelatedCoursesTx(tx, lectureID, relatedIDs); err != nil {
+				if rbErr := tx.Rollback(); rbErr != nil {
+					return fmt.Errorf("rollback on insert related courses: %v (original error: %w)", rbErr, err)
+				}
+				return err
+			}
+		}
+		lectures[idx].RelatedCourses = relatedIDs
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -633,9 +688,6 @@ func (r *LectureRepository) insertLectureTx(tx *sql.Tx, lecture *domain.Lecture)
 	if err := r.insertKeywordsTx(tx, lectureID, lecture.Keywords); err != nil {
 		return 0, err
 	}
-	if err := r.insertRelatedCoursesTx(tx, lectureID, lecture.RelatedCourses); err != nil {
-		return 0, err
-	}
 
 	return lectureID, nil
 }
@@ -777,6 +829,81 @@ func (r *LectureRepository) insertRelatedCoursesTx(tx *sql.Tx, lectureID int, re
 	}
 
 	return nil
+}
+
+func (r *LectureRepository) findLectureIDsByCodesTx(tx *sql.Tx, codes []string) (map[string]int, error) {
+	result := make(map[string]int)
+	if len(codes) == 0 {
+		return result, nil
+	}
+
+	placeholders := placeholders(len(codes))
+	query := fmt.Sprintf(`SELECT id, code FROM lectures WHERE UPPER(code) IN (%s)`, placeholders)
+	args := make([]any, len(codes))
+	for idx, code := range codes {
+		args[idx] = code
+	}
+
+	rows, err := tx.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("select lectures by code: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var code string
+		if err := rows.Scan(&id, &code); err != nil {
+			return nil, fmt.Errorf("scan lecture code: %w", err)
+		}
+		normalized := normalizeCourseCode(code)
+		if normalized == "" {
+			continue
+		}
+		if _, exists := result[normalized]; !exists {
+			result[normalized] = id
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate lecture codes: %w", err)
+	}
+
+	return result, nil
+}
+
+func resolveRelatedCourseIDs(codes []string, mapping map[string]int, selfID int) []int {
+	if len(codes) == 0 {
+		return nil
+	}
+	results := make([]int, 0, len(codes))
+	seen := make(map[int]struct{})
+	for _, code := range codes {
+		normalized := normalizeCourseCode(code)
+		if normalized == "" {
+			continue
+		}
+		id, ok := mapping[normalized]
+		if !ok {
+			continue
+		}
+		if id == selfID {
+			continue
+		}
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		results = append(results, id)
+	}
+	if len(results) == 0 {
+		return nil
+	}
+	return results
+}
+
+func normalizeCourseCode(code string) string {
+	return strings.ToUpper(strings.TrimSpace(code))
 }
 
 func (r *LectureRepository) ensureTeacherTx(tx *sql.Tx, name, url string) (int, error) {

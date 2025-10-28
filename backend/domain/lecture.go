@@ -1,47 +1,48 @@
 package domain
 
 type Lecture struct {
-	ID             int
-	University     string
-	Title          string
-	EnglishTitle   string
-	Department     string
-	LectureType    LectureType
-	Code           string
-	Level          Level
-	Credit         int
-	Year           int
-	Language       string
-	Url            string
-	Abstract       string
-	Goal           string
-	Experience     string
-	Flow           string
-	OutOfClassWork string
-	Textbook       string
-	ReferenceBook  string
-	Assessment     string
-	Prerequisite   string
-	Contact        string
-	OfficeHours    string
-	Note           string
-	Timetables     []TimeTable
-	Teachers       []Teacher
-	LecturePlans   []LecturePlan
-	Keywords       []string
-	RelatedCourses []int
+	ID                 int
+	University         string
+	Title              string
+	EnglishTitle       string
+	Department         string
+	LectureType        LectureType
+	Code               string
+	Level              Level
+	Credit             int
+	Year               int
+	Language           string
+	Url                string
+	Abstract           string
+	Goal               string
+	Experience         string
+	Flow               string
+	OutOfClassWork     string
+	Textbook           string
+	ReferenceBook      string
+	Assessment         string
+	Prerequisite       string
+	Contact            string
+	OfficeHours        string
+	Note               string
+	Timetables         []TimeTable
+	Teachers           []Teacher
+	LecturePlans       []LecturePlan
+	Keywords           []string
+	RelatedCourseCodes []string
+	RelatedCourses     []int
 }
 
 type LectureSummary struct {
-	ID             int
-	University     string
-	Title          string
-	Department     string
-	Code           string
-	Level          Level
-	Year           int
-	Timetables     []TimeTable
-	Teachers       []Teacher
+	ID         int
+	University string
+	Title      string
+	Department string
+	Code       string
+	Level      Level
+	Year       int
+	Timetables []TimeTable
+	Teachers   []Teacher
 }
 
 type LectureType string
@@ -67,18 +68,18 @@ const (
 
 func FromLevel(level int) Level {
 	switch level {
-	case 1:	
+	case 1:
 		return LevelBachelor1
 	case 2:
-		return LevelBachelor2	
+		return LevelBachelor2
 	case 3:
-		return LevelBachelor3	
-	case 4:	
+		return LevelBachelor3
+	case 4:
 		return LevelMaster1
 	case 5:
-		return LevelMaster2	
+		return LevelMaster2
 	case 6:
-		return LevelDoctor	
+		return LevelDoctor
 	default:
 		return 0
 	}
@@ -105,6 +106,6 @@ type LectureRepository interface {
 	Search(query SearchQuery) ([]LectureSummary, error)
 	Create(lecture *Lecture) error
 	Creates(lectures []Lecture) error
-	Update(lecture *Lecture) error	
+	Update(lecture *Lecture) error
 	Delete(id int) error
 }
