@@ -5,6 +5,7 @@ import { Greet, Scrape, ScrapeTest } from "../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../wailsjs/runtime/runtime";
 
 const DEFAULT_STATUS = "Not fetched";
+const COMPLETE_STATUS = "完了しました";
 
 type ScrapeProgressPayload = {
   total?: number;
@@ -72,7 +73,11 @@ const FetchButton = () => {
         if (isObject(payload)) {
           const progress = normalizeProgress(payload as ScrapeProgressPayload);
           if (progress) {
-            setStatus(formatProgressStatus(progress));
+            if (progress.total <= 0 || progress.current >= progress.total) {
+              setStatus(COMPLETE_STATUS);
+            } else {
+              setStatus(formatProgressStatus(progress));
+            }
             return;
           }
         }
@@ -98,6 +103,7 @@ const FetchButton = () => {
     setStatus("Fetching...");
     try {
       await Scrape();
+      setStatus(COMPLETE_STATUS);
     } catch (error) {
       console.error("Scrape failed", error);
       setStatus("Fetch failed");
@@ -111,6 +117,7 @@ const FetchButton = () => {
     setStatus("Fetch-Test...");
     try {
       await ScrapeTest();
+      setStatus(COMPLETE_STATUS);
     } catch (error) {
       console.error("Scrape failed", error);
       setStatus("Fetch-Test failed");
