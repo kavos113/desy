@@ -73,6 +73,27 @@ func (a *App) Scrape() error {
 	return err
 }
 
+func (a *App) ScrapeAll() error {
+	if a.scraperUsecase == nil {
+		return fmt.Errorf("scraper usecase is not configured")
+	}
+
+	ctx := a.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	cleanup := a.attachProgressReporter(ctx)
+	defer cleanup()
+
+	for year := 2020; year <= time.Now().Year(); year++ {
+		_, err := a.scraperUsecase.ScrapeTopPageAndSave(ctx, year)
+		if err != nil {
+			return fmt.Errorf("scrape year %d: %w", year, err)
+		}
+	}
+	return nil
+}
+
 func (a *App) ScrapeTest() error {
 	const testURL = "https://syllabus.s.isct.ac.jp/courses/2025/4/0-904-340000-120900-20927"
 	if a.scraperUsecase == nil {

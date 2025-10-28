@@ -10,6 +10,8 @@ export function MigrateRelatedCourses():Promise<number>;
 
 export function Scrape():Promise<void>;
 
+export function ScrapeAll():Promise<void>;
+
 export function ScrapeTest():Promise<void>;
 
 export function SearchLectures(arg1:domain.SearchQuery):Promise<Array<domain.LectureSummary>>;

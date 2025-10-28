@@ -18,6 +18,10 @@ export function Scrape() {
   return window['go']['main']['App']['Scrape']();
 }
 
+export function ScrapeAll() {
+  return window['go']['main']['App']['ScrapeAll']();
+}
+
 export function ScrapeTest() {
   return window['go']['main']['App']['ScrapeTest']();
 }
