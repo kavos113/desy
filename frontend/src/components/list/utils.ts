@@ -25,13 +25,17 @@ export function formatTeachers(teachers: domain.Teacher[] | undefined): string {
   return teachers.map((teacher) => teacher.Name).join(", ");
 }
 
-export function formatTimetables(timetables: domain.TimeTable[] | undefined): string {
+export function formatTimetables(
+  timetables: domain.TimeTable[] | undefined
+): string {
   if (!timetables || timetables.length === 0) {
     return "";
   }
 
   const formatted = timetables.map((timetable) => {
-    const day = DAY_OF_WEEK_LABELS[timetable.DayOfWeek?.toLowerCase() ?? ""] ?? timetable.DayOfWeek;
+    const day =
+      DAY_OF_WEEK_LABELS[timetable.DayOfWeek?.toLowerCase() ?? ""] ??
+      timetable.DayOfWeek;
     const period = timetable.Period ? `${timetable.Period}` : "";
     const room = timetable.Room?.Name ? `(${timetable.Room.Name})` : "";
     return `${day}${period}${room}`;
@@ -40,13 +44,19 @@ export function formatTimetables(timetables: domain.TimeTable[] | undefined): st
   return Array.from(new Set(formatted)).join(", ");
 }
 
-export function formatSemesters(timetables: domain.TimeTable[] | undefined): string {
+export function formatSemesters(
+  timetables: domain.TimeTable[] | undefined
+): string {
   if (!timetables || timetables.length === 0) {
     return "";
   }
 
   const labels = timetables
-    .map((timetable) => SEMESTER_LABELS[timetable.Semester?.toLowerCase() ?? ""] ?? timetable.Semester)
+    .map(
+      (timetable) =>
+        SEMESTER_LABELS[timetable.Semester?.toLowerCase() ?? ""] ??
+        timetable.Semester
+    )
     .filter((label): label is string => Boolean(label));
 
   if (labels.length === 0) {

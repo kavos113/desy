@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { domain } from "../../wailsjs/go/models";
-import SimpleButton from "../common/SimpleButton";
+import SimpleButton from "./common/SimpleButton";
 import ListTable from "./list/ListTable";
 import Search from "./search/Search";
 import { formatTeachers, formatTimetables } from "./list/utils";

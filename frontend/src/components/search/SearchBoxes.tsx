@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import ComboBox from "../../common/ComboBox";
-import SearchBox from "../../common/SearchBox";
+import ComboBox from "../common/ComboBox";
+import SearchBox from "../common/SearchBox";
 import {
   DEPARTMENTS_MENU,
   MOBILE_DEPARTMENTS_MENU,

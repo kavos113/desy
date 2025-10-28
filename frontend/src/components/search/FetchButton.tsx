@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import SimpleButton from "../../common/SimpleButton";
+import SimpleButton from "../common/SimpleButton";
 import "./search.css";
 import { Greet, Scrape } from "../../../wailsjs/go/main/App";
 import { EventsOn } from "../../../wailsjs/runtime/runtime";

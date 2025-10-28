@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import CheckBox from "../../common/CheckBox";
+import CheckBox from "../common/CheckBox";
 import "./search.css";
 
 type CheckBoxesProps = {

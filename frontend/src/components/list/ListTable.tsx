@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { domain } from "../../../wailsjs/go/models";
 import { GetLectureDetails } from "../../../wailsjs/go/main/App";
-import SimpleButton from "../../common/SimpleButton";
+import SimpleButton from "../common/SimpleButton";
 import CourseDetail from "./CourseDetail";
 import ListHeaderItem from "./ListHeaderItem";
 import ListItem from "./ListItem";
