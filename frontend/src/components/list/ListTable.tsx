@@ -84,7 +84,7 @@ const ListTable = ({ items, onSort, className }: ListTableProps) => {
         <p>講義が見つかりませんでした。</p>
       ) : (
         items.map((item) => (
-          <ListItem key={item.ID} item={item} onClick={handleListItemClick} className="item" />
+          <ListItem key={item.ID} item={item} onClick={handleListItemClick} />
         ))
       )}
 
