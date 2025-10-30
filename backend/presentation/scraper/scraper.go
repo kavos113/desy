@@ -321,6 +321,7 @@ func parseLectureType(raw string) domain.LectureType {
 }
 
 var numberRegexp = regexp.MustCompile(`(\d+)`)
+var periodRangeRegexp = regexp.MustCompile(`(\d+)(?:\s*[-－〜～~–—]\s*(\d+))?`)
 var courseCodePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9.\-]*`)
 
 func parseFirstInt(raw string) int {
@@ -335,7 +336,7 @@ func parseFirstInt(raw string) int {
 
 func parseCredit(raw string) int {
 	value := parseFirstInt(raw)
-	return value / 100 + value % 100 / 10 + value % 10
+	return value/100 + value%100/10 + value%10
 }
 
 func parseLevelFromCode(code string) domain.Level {
@@ -561,8 +562,8 @@ func parseTimetables(raw, quarter string) []domain.TimeTable {
 			continue
 		}
 		periodPart := strings.TrimSpace(entry[1:])
-		numbers := numberRegexp.FindAllString(periodPart, -1)
-		if len(numbers) == 0 {
+		matches := periodRangeRegexp.FindAllStringSubmatch(periodPart, -1)
+		if len(matches) == 0 {
 			for _, semester := range semesters {
 				tt := domain.TimeTable{Semester: semester, DayOfWeek: day}
 				if roomName != "" {
@@ -572,17 +573,28 @@ func parseTimetables(raw, quarter string) []domain.TimeTable {
 			}
 			continue
 		}
-		for _, num := range numbers {
-			p, err := strconv.Atoi(num)
+		for _, match := range matches {
+			start, err := strconv.Atoi(match[1])
 			if err != nil {
 				continue
 			}
-			for _, semester := range semesters {
-				tt := domain.TimeTable{Semester: semester, DayOfWeek: day, Period: domain.Period(p)}
-				if roomName != "" {
-					tt.Room.Name = roomName
+			end := start
+			if len(match) > 2 && match[2] != "" {
+				if parsedEnd, cerr := strconv.Atoi(match[2]); cerr == nil {
+					end = parsedEnd
 				}
-				timetables = append(timetables, tt)
+			}
+			if end < start {
+				start, end = end, start
+			}
+			for p := start; p <= end; p++ {
+				for _, semester := range semesters {
+					tt := domain.TimeTable{Semester: semester, DayOfWeek: day, Period: domain.Period(p)}
+					if roomName != "" {
+						tt.Room.Name = roomName
+					}
+					timetables = append(timetables, tt)
+				}
 			}
 		}
 	}

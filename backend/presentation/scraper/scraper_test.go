@@ -489,3 +489,37 @@ func TestAddEnglishTitle(t *testing.T) {
 		t.Fatalf("unexpected english title: %s", lecture.EnglishTitle)
 	}
 }
+
+func TestParseTimetablesRangeExpansion(t *testing.T) {
+	testCases := []struct {
+		name string
+		raw  string
+	}{
+		{name: "hyphen", raw: "月5-8"},
+		{name: "fullwidth wave", raw: "月5～8"},
+		{name: "tilde", raw: "月5〜8"},
+	}
+
+	expectedPeriods := []domain.Period{domain.Period5, domain.Period6, domain.Period7, domain.Period8}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			got := parseTimetables(tc.raw, "3Q")
+			if len(got) != len(expectedPeriods) {
+				t.Fatalf("unexpected timetable count: got %d, want %d", len(got), len(expectedPeriods))
+			}
+			for i, tt := range got {
+				if tt.Semester != domain.SemesterFall {
+					t.Errorf("unexpected semester at index %d: got %s, want %s", i, tt.Semester, domain.SemesterFall)
+				}
+				if tt.DayOfWeek != domain.DayOfWeekMonday {
+					t.Errorf("unexpected day at index %d: got %s, want %s", i, tt.DayOfWeek, domain.DayOfWeekMonday)
+				}
+				if tt.Period != expectedPeriods[i] {
+					t.Errorf("unexpected period at index %d: got %d, want %d", i, tt.Period, expectedPeriods[i])
+				}
+			}
+		})
+	}
+}
