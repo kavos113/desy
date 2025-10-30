@@ -175,16 +175,6 @@ const CourseDetail = ({
           <dt>言語</dt>
           <dd>{lecture.Language}</dd>
         </dl>
-        <dl className="course-detail-row-half">
-          <dt>シラバスURL</dt>
-          <dd>
-            {lecture.Url ? (
-              <a href={lecture.Url} target="_blank" rel="noreferrer">
-                {lecture.Url}
-              </a>
-            ) : null}
-          </dd>
-        </dl>
       </div>
 
       <div className="course-detail-section">

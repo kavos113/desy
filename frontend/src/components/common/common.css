@@ -59,7 +59,7 @@
   border-radius: 12px;
   background: var(--white);
   position: relative;
-  z-index: 10;
+  z-index: 0;
 }
 
 .comboMenu {
@@ -69,6 +69,7 @@
   width: 240px;
   border-radius: 12px;
   background: var(--white);
+  z-index: 10;
 }
 
 .comboMenu > .menu {
@@ -126,7 +127,12 @@
   margin: 0;
   padding: 0;
   box-shadow: 0 2px 4px var(--stmain);
-  z-index: 100;
+  z-index: 20;
+}
+
+.combobox-box-container:focus-within,
+.combobox-box-container:hover {
+  z-index: 1000;
 }
 
 .arrow {

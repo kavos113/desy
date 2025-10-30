@@ -45,7 +45,7 @@ const SearchConditions = ({
       <Timetable onCheckItem={onTimetableChange} />
       <CheckBox
         checkboxId="filterNotResearch"
-        content="研究系科目を除外"
+        content="講究除外"
         onChange={handleFilterToggle}
       />
     </div>
