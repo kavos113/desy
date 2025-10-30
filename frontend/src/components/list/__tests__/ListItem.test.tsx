@@ -22,7 +22,7 @@ describe("ListItem", () => {
         },
         {
           DayOfWeek: "monday",
-          Period: 1,
+          Period: 2,
           Room: { Name: "W1" },
           Semester: "spring",
         },
@@ -44,7 +44,7 @@ describe("ListItem", () => {
     expect(screen.getByText("ABC123")).toBeInTheDocument();
     expect(screen.getByText("アルゴリズム")).toBeInTheDocument();
     expect(screen.getByText("田中太郎")).toBeInTheDocument();
-    expect(screen.getByText("月1(W1)")).toBeInTheDocument();
+  expect(screen.getByText("月1-2(W1)")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("アルゴリズム"));
     expect(handleClick).toHaveBeenCalledWith(1);

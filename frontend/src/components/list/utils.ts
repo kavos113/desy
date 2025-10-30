@@ -18,6 +18,29 @@ const SEMESTER_LABELS: Record<string, string> = {
   winter: "冬学期",
 };
 
+const DAY_ORDER = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+type TimeTableGroup = {
+  dayKey: string;
+  dayLabel: string;
+  roomLabel: string;
+  order: number;
+  periods: Set<number>;
+};
+
+type PeriodRange = {
+  start: number;
+  end: number;
+};
+
 export function formatTeachers(teachers: domain.Teacher[] | undefined): string {
   if (!teachers || teachers.length === 0) {
     return "";
@@ -32,16 +55,87 @@ export function formatTimetables(
     return "";
   }
 
-  const formatted = timetables.map((timetable) => {
-    const day =
-      DAY_OF_WEEK_LABELS[timetable.DayOfWeek?.toLowerCase() ?? ""] ??
-      timetable.DayOfWeek;
-    const period = timetable.Period ? `${timetable.Period}` : "";
-    const room = timetable.Room?.Name ? `(${timetable.Room.Name})` : "";
-    return `${day}${period}${room}`;
+  const groups = new Map<string, TimeTableGroup>();
+  const fallbacks: string[] = [];
+
+  timetables.forEach((timetable) => {
+    if (!timetable) {
+      return;
+    }
+
+    const rawDay = timetable.DayOfWeek ?? "";
+    const dayKey = rawDay.toString().toLowerCase();
+    const dayLabel = DAY_OF_WEEK_LABELS[dayKey] ?? rawDay;
+    const roomLabel = timetable.Room?.Name?.trim() ?? "";
+    const periodValue = Number(timetable.Period);
+    const hasPeriod = Number.isFinite(periodValue) && periodValue > 0;
+
+    const fallback = buildFallbackLabel(
+      dayLabel,
+      timetable.Period,
+      timetable.Room?.Name
+    );
+
+    if (!dayLabel || !hasPeriod) {
+      if (fallback) {
+        fallbacks.push(fallback);
+      }
+      return;
+    }
+
+    const key = `${dayKey}::${roomLabel}`;
+    if (!groups.has(key)) {
+      const orderIndex = DAY_ORDER.indexOf(dayKey);
+      groups.set(key, {
+        dayKey,
+        dayLabel,
+        roomLabel,
+        order: orderIndex === -1 ? Number.MAX_SAFE_INTEGER : orderIndex,
+        periods: new Set<number>(),
+      });
+    }
+
+    groups.get(key)!.periods.add(periodValue);
   });
 
-  return Array.from(new Set(formatted)).join(", ");
+  const formatted: string[] = [];
+
+  Array.from(groups.values())
+    .sort((left, right) => {
+      if (left.order !== right.order) {
+        return left.order - right.order;
+      }
+
+      if (left.roomLabel === right.roomLabel) {
+        return left.dayLabel.localeCompare(right.dayLabel, "ja");
+      }
+
+      if (!left.roomLabel) {
+        return -1;
+      }
+      if (!right.roomLabel) {
+        return 1;
+      }
+      return left.roomLabel.localeCompare(right.roomLabel, "ja");
+    })
+    .forEach((group) => {
+      const periods = Array.from(group.periods).sort((a, b) => a - b);
+      const ranges = compressPeriods(periods);
+      const roomSuffix = group.roomLabel ? `(${group.roomLabel})` : "";
+
+      ranges.forEach((range) => {
+        const periodLabel =
+          range.start === range.end
+            ? `${range.start}`
+            : `${range.start}-${range.end}`;
+        formatted.push(`${group.dayLabel}${periodLabel}${roomSuffix}`);
+      });
+    });
+
+  const uniqueFallbacks = fallbacks.filter(Boolean);
+
+  const result = [...formatted, ...uniqueFallbacks];
+  return Array.from(new Set(result)).join(", ");
 }
 
 export function formatSemesters(
@@ -75,4 +169,48 @@ export function splitIntoLines(value: string | undefined | null): string[] {
     .split(/<br\s*\/?>|\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
+}
+
+function compressPeriods(periods: number[]): PeriodRange[] {
+  if (periods.length === 0) {
+    return [];
+  }
+
+  const ranges: PeriodRange[] = [];
+  let start = periods[0];
+  let end = start;
+
+  for (let index = 1; index < periods.length; index += 1) {
+    const current = periods[index];
+    if (current === end + 1) {
+      end = current;
+      continue;
+    }
+
+    ranges.push({ start, end });
+    start = current;
+    end = current;
+  }
+
+  ranges.push({ start, end });
+  return ranges;
+}
+
+function buildFallbackLabel(
+  dayLabel: string,
+  period: number | undefined,
+  roomName: string | undefined
+): string {
+  const dayPart = dayLabel ?? "";
+  const periodPart =
+    Number.isFinite(Number(period)) && Number(period) > 0
+      ? `${Number(period)}`
+      : "";
+  const roomPart = roomName ? `(${roomName})` : "";
+
+  if (!dayPart && !periodPart && !roomPart) {
+    return "";
+  }
+
+  return `${dayPart}${periodPart}${roomPart}`;
 }
