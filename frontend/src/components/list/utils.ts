@@ -11,11 +11,11 @@ const DAY_OF_WEEK_LABELS: Record<string, string> = {
 };
 
 const SEMESTER_LABELS: Record<string, string> = {
-  spring: '春学期',
-  summer: '夏学期',
-  fall: '秋学期',
-  autumn: '秋学期',
-  winter: '冬学期'
+  spring: '1Q',
+  summer: '2Q',
+  fall: '3Q',
+  autumn: '3Q',
+  winter: '4Q'
 };
 
 const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
