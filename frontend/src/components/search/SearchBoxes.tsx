@@ -12,27 +12,36 @@ import './search.css';
 
 type SearchBoxesProps = {
   onClickMenuItem?: (key: SearchComboBox, items: string[]) => void;
-  onChangeSearchBox?: (title: string, lecturer: string) => void;
+  onChangeSearchBox?: (title: string, lecturer: string, room: string) => void;
 };
 
 const SearchBoxes = ({ onClickMenuItem, onChangeSearchBox }: SearchBoxesProps) => {
   const [title, setTitle] = useState('');
   const [lecturer, setLecturer] = useState('');
+  const [room, setRoom] = useState('');
 
   const handleTitleChange = useCallback(
     (value: string) => {
       setTitle(value);
-      onChangeSearchBox?.(value, lecturer);
+      onChangeSearchBox?.(value, lecturer, room);
     },
-    [lecturer, onChangeSearchBox]
+    [lecturer, onChangeSearchBox, room]
   );
 
   const handleLecturerChange = useCallback(
     (value: string) => {
       setLecturer(value);
-      onChangeSearchBox?.(title, value);
+      onChangeSearchBox?.(title, value, room);
     },
-    [onChangeSearchBox, title]
+    [onChangeSearchBox, room, title]
+  );
+
+  const handleRoomChange = useCallback(
+    (value: string) => {
+      setRoom(value);
+      onChangeSearchBox?.(title, lecturer, value);
+    },
+    [lecturer, onChangeSearchBox, title]
   );
 
   const handleSelect = (key: SearchComboBox) => {
@@ -57,6 +66,7 @@ const SearchBoxes = ({ onClickMenuItem, onChangeSearchBox }: SearchBoxesProps) =
       <ComboBox items={YEARS_MENU} onSelectItem={handleSelect('year')} />
       <SearchBox placeholder="講義名" value={title} onChange={handleTitleChange} />
       <SearchBox placeholder="教員名" value={lecturer} onChange={handleLecturerChange} />
+      <SearchBox placeholder="講義室名" value={room} onChange={handleRoomChange} />
     </div>
   );
 };

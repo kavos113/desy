@@ -233,6 +233,7 @@ export namespace domain {
 	    Departments: string[];
 	    Year: number;
 	    TeacherName: string;
+	    Room: string;
 	    TimeTables: TimeTable[];
 	    Levels: number[];
 	    FilterNotResearch: boolean;
@@ -248,6 +249,7 @@ export namespace domain {
 	        this.Departments = source["Departments"];
 	        this.Year = source["Year"];
 	        this.TeacherName = source["TeacherName"];
+	        this.Room = source["Room"];
 	        this.TimeTables = this.convertValues(source["TimeTables"], TimeTable);
 	        this.Levels = source["Levels"];
 	        this.FilterNotResearch = source["FilterNotResearch"];

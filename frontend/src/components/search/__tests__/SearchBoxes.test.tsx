@@ -17,13 +17,20 @@ describe('SearchBoxes', () => {
     });
 
     expect(handleChange).toHaveBeenCalled();
-    expect(handleChange).toHaveBeenLastCalledWith('法学', '');
+  expect(handleChange).toHaveBeenLastCalledWith('法学', '', '');
 
     const lecturerInput = screen.getByPlaceholderText('教員名');
     await act(async () => {
       await user.type(lecturerInput, '佐藤');
     });
 
-    expect(handleChange).toHaveBeenLastCalledWith('法学', '佐藤');
+    expect(handleChange).toHaveBeenLastCalledWith('法学', '佐藤', '');
+
+    const roomInput = screen.getByPlaceholderText('講義室名');
+    await act(async () => {
+      await user.type(roomInput, '101');
+    });
+
+    expect(handleChange).toHaveBeenLastCalledWith('法学', '佐藤', '101');
   });
 });

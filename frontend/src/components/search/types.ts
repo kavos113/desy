@@ -1,7 +1,7 @@
 import type { Day, Period } from '../../constants';
 
 export type SearchComboBox = 'university' | 'department' | 'year';
-export type SearchSearchBox = 'title' | 'lecturer';
+export type SearchSearchBox = 'title' | 'lecturer' | 'room';
 export type SearchCheckBox = 'grade' | 'quarter';
 export type SearchConditionKey = SearchComboBox | SearchSearchBox | SearchCheckBox;
 
@@ -16,6 +16,7 @@ export interface SearchState {
   year: string[];
   title: string[];
   lecturer: string[];
+  room: string[];
   grade: string[];
   quarter: string[];
   timetable: SearchTimetableSelection[];

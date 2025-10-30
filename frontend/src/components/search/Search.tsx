@@ -26,6 +26,7 @@ const INITIAL_STATE: SearchState = {
   year: [],
   title: [],
   lecturer: [],
+  room: [],
   grade: [],
   quarter: [],
   timetable: [],
@@ -35,6 +36,7 @@ const INITIAL_STATE: SearchState = {
 const buildSearchQuery = (state: SearchState) => {
   const title = state.title[0] ?? '';
   const teacherName = state.lecturer[0] ?? '';
+  const room = state.room[0] ?? '';
   const keywords = parseKeywordInput(state.title.join(' '));
   const levels = state.grade
     .map(gradeLabelToLevel)
@@ -57,6 +59,7 @@ const buildSearchQuery = (state: SearchState) => {
     Departments: state.department,
     Year: yearValue,
     TeacherName: teacherName,
+  Room: room,
     TimeTables: timetables,
     Levels: levels,
     FilterNotResearch: state.filterNotResearch

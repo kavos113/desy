@@ -16,9 +16,10 @@ const SearchField = ({
   onToggleFilterNotResearch
 }: SearchFieldProps) => {
   const handleSearchBoxChange = useCallback(
-    (title: string, lecturer: string) => {
+    (title: string, lecturer: string, room: string) => {
       onClickMenuItem?.('title', title ? [title] : []);
       onClickMenuItem?.('lecturer', lecturer ? [lecturer] : []);
+      onClickMenuItem?.('room', room ? [room] : []);
     },
     [onClickMenuItem]
   );

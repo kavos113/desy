@@ -38,4 +38,22 @@ describe('Search', () => {
     const [[query]] = searchLecturesMock.mock.calls;
     expect(query.FilterNotResearch ?? false).toBe(true);
   });
+
+  it('講義室名を検索条件として送信できる', async () => {
+    const user = userEvent.setup();
+    render(<Search />);
+
+    const roomInput = screen.getByPlaceholderText('講義室名');
+    await act(async () => {
+      await user.type(roomInput, '本館');
+      await user.click(screen.getByRole('button', { name: 'Search' }));
+    });
+
+    await waitFor(() => {
+      expect(searchLecturesMock).toHaveBeenCalledTimes(1);
+    });
+
+    const [[query]] = searchLecturesMock.mock.calls;
+    expect(query.Room ?? '').toBe('本館');
+  });
 });
