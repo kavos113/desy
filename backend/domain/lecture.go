@@ -106,6 +106,7 @@ type SearchQuery struct {
 	Year              int
 	TeacherName       string
 	Room              string
+	Semester          []Semester
 	TimeTables        []TimeTable
 	Levels            []Level
 	FilterNotResearch bool

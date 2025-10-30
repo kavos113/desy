@@ -310,7 +310,8 @@ func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSu
 		}
 	}
 
-	if len(query.TimeTables) > 0 || query.Room != "" {
+	timetableJoinRequired := len(query.TimeTables) > 0 || query.Room != "" || len(query.Semester) > 0
+	if timetableJoinRequired {
 		joins = append(joins, "JOIN timetables tt ON tt.lecture_id = l.id")
 	}
 
@@ -325,6 +326,14 @@ func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSu
 		}
 		if len(timetableFilters) > 0 {
 			conditions = append(conditions, "("+strings.Join(timetableFilters, " OR ")+")")
+		}
+	}
+
+	if len(query.Semester) > 0 {
+		placeholderStr := placeholders(len(query.Semester))
+		conditions = append(conditions, "tt.semester IN ("+placeholderStr+")")
+		for _, semester := range query.Semester {
+			args = append(args, string(semester))
 		}
 	}
 

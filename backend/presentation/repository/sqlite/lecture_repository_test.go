@@ -278,6 +278,39 @@ func TestLectureRepositorySearchPartialMatchJapaneseTitle(t *testing.T) {
 	}
 }
 
+func TestLectureRepositorySearchPartialMatchJapaneseTitle2(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		1,
+		"テスト大学",
+		"解析学概論",
+		"数学",
+		"CS-JP-01",
+		2025,
+	)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		2,
+		"テスト大学",
+		"データサイエンス演習",
+		"情報科学",
+		"CS-JP-02",
+		2025,
+	)
+
+	results, err := repo.Search(domain.SearchQuery{Title: "解析"})
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result for partial Japanese title match, got %d", len(results))
+	}
+	if results[0].Title != "解析学概論" {
+		t.Fatalf("unexpected title: %s", results[0].Title)
+	}
+}
+
 func TestLectureRepositorySearchPartialMatchJapaneseTeacherName(t *testing.T) {
 	repo, db := newTestRepository(t)
 
@@ -375,6 +408,103 @@ func TestLectureRepositorySearchFiltersByRoom(t *testing.T) {
 	}
 	if other[0].Title != "物理学実験" {
 		t.Fatalf("unexpected lecture matched for second room: %s", other[0].Title)
+	}
+}
+
+func TestLectureRepositorySearchFiltersBySemester(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		1,
+		"テスト大学",
+		"線形代数",
+		"理工学部",
+		"MA-201",
+		2025,
+	)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		2,
+		"テスト大学",
+		"確率統計",
+		"理工学部",
+		"MA-202",
+		2025,
+	)
+
+	mustExec(t, db, `INSERT INTO timetables (lecture_id, semester, day_of_week, period) VALUES (?, ?, ?, ?)`,
+		1,
+		string(domain.SemesterSpring),
+		string(domain.DayOfWeekMonday),
+		int(domain.Period1),
+	)
+
+	mustExec(t, db, `INSERT INTO timetables (lecture_id, semester, day_of_week, period) VALUES (?, ?, ?, ?)`,
+		2,
+		string(domain.SemesterFall),
+		string(domain.DayOfWeekTuesday),
+		int(domain.Period2),
+	)
+
+	results, err := repo.Search(domain.SearchQuery{Semester: []domain.Semester{domain.SemesterSpring}})
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result for semester filter, got %d", len(results))
+	}
+	if results[0].Title != "線形代数" {
+		t.Fatalf("unexpected lecture matched for semester: %s", results[0].Title)
+	}
+
+	other, err := repo.Search(domain.SearchQuery{Semester: []domain.Semester{domain.SemesterFall}})
+	if err != nil {
+		t.Fatalf("Search returned error for second semester: %v", err)
+	}
+	if len(other) != 1 {
+		t.Fatalf("expected 1 result for second semester filter, got %d", len(other))
+	}
+	if other[0].Title != "確率統計" {
+		t.Fatalf("unexpected lecture matched for second semester: %s", other[0].Title)
+	}
+}
+
+func TestLectureRepositorySearchTimetablesIgnoreSemesterField(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		1,
+		"テスト大学",
+		"情報理論",
+		"理工学部",
+		"CS-301",
+		2025,
+	)
+
+	mustExec(t, db, `INSERT INTO timetables (lecture_id, semester, day_of_week, period) VALUES (?, ?, ?, ?)`,
+		1,
+		string(domain.SemesterSpring),
+		string(domain.DayOfWeekMonday),
+		int(domain.Period1),
+	)
+
+	query := domain.SearchQuery{
+		TimeTables: []domain.TimeTable{{
+			Semester:  domain.SemesterWinter,
+			DayOfWeek: domain.DayOfWeekMonday,
+			Period:    domain.Period1,
+		}},
+	}
+
+	results, err := repo.Search(query)
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result ignoring timetable semester, got %d", len(results))
+	}
+	if results[0].Title != "情報理論" {
+		t.Fatalf("unexpected lecture matched when ignoring timetable semester: %s", results[0].Title)
 	}
 }
 
