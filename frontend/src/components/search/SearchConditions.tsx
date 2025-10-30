@@ -1,9 +1,9 @@
-import { useCallback } from "react";
-import CheckBoxes from "./CheckBoxes";
-import Timetable from "./Timetable";
-import { GRADE_LABELS, QUARTER_LABELS } from "../../constants";
-import type { SearchCheckBox, SearchTimetableSelection } from "./types";
-import "./search.css";
+import { useCallback } from 'react';
+import CheckBoxes from './CheckBoxes';
+import Timetable from './Timetable';
+import { GRADE_LABELS, QUARTER_LABELS } from '../../constants';
+import type { SearchCheckBox, SearchTimetableSelection } from './types';
+import './search.css';
 
 type SearchConditionsProps = {
   onCheckItem?: (type: SearchCheckBox, items: string[]) => void;
@@ -13,14 +13,14 @@ type SearchConditionsProps = {
 const SearchConditions = ({ onCheckItem, onTimetableChange }: SearchConditionsProps) => {
   const handleGradeCheck = useCallback(
     (items: string[]) => {
-      onCheckItem?.("grade", items);
+      onCheckItem?.('grade', items);
     },
     [onCheckItem]
   );
 
   const handleQuarterCheck = useCallback(
     (items: string[]) => {
-      onCheckItem?.("quarter", items);
+      onCheckItem?.('quarter', items);
     },
     [onCheckItem]
   );

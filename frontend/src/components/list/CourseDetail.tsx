@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef } from "react";
-import { domain } from "../../../wailsjs/go/models";
-import { formatSemesters, formatTeachers, formatTimetables, splitIntoLines } from "./utils";
-import "./list.css";
-import { render } from "@testing-library/react";
+import { useEffect, useMemo, useRef } from 'react';
+import { domain } from '../../../wailsjs/go/models';
+import { formatSemesters, formatTeachers, formatTimetables, splitIntoLines } from './utils';
+import './list.css';
+import { render } from '@testing-library/react';
 
 type CourseDetailProps = {
   lecture?: domain.Lecture | null;
@@ -16,7 +16,11 @@ export type RelatedCourseEntry = {
   title?: string;
 };
 
-const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: CourseDetailProps) => {
+const CourseDetail = ({
+  lecture,
+  relatedCourses = [],
+  onSelectRelatedCourse
+}: CourseDetailProps) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -27,10 +31,10 @@ const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: C
 
     wrapper.scrollTop = 0;
 
-    const scrollContainer = wrapper.closest(".detail-panel") as HTMLElement | null;
+    const scrollContainer = wrapper.closest('.detail-panel') as HTMLElement | null;
     if (scrollContainer) {
-      if (typeof scrollContainer.scrollTo === "function") {
-        scrollContainer.scrollTo({ top: 0, behavior: "auto" });
+      if (typeof scrollContainer.scrollTo === 'function') {
+        scrollContainer.scrollTo({ top: 0, behavior: 'auto' });
       } else {
         scrollContainer.scrollTop = 0;
       }
@@ -71,7 +75,7 @@ const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: C
     return (
       <ul className="course-related-list">
         {relatedCourses.map((course) => {
-          const key = `${course.code}-${course.id ?? "text"}`;
+          const key = `${course.code}-${course.id ?? 'text'}`;
           const clickable = Boolean(course.id && onSelectRelatedCourse);
           const label = course.title ? `${course.title} (${course.code})` : course.code;
 
@@ -102,17 +106,17 @@ const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: C
   };
 
   const renderSection = (content: string, header: string) => {
-    if (content != "") {
+    if (content != '') {
       return (
         <div className="course-detail-section">
           <h3>{header}</h3>
           {renderParagraphs(content)}
         </div>
-      )
+      );
     } else {
       return null;
     }
-  }
+  };
 
   console.log(lecture);
 
@@ -226,7 +230,7 @@ const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: C
 
       <div className="course-detail-section">
         <h3>キーワード</h3>
-        <p className="course-detail-text">{keywords.join(", ")}</p>
+        <p className="course-detail-text">{keywords.join(', ')}</p>
       </div>
 
       <div className="course-detail-section">
@@ -238,20 +242,20 @@ const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: C
         <h3>参考書・講義資料等</h3>
         <ul className="course-detail-reference">{renderList(lecture.ReferenceBook)}</ul>
       </div>
-      
-      {renderSection(lecture.Flow, "授業の進め方")}
-      {renderSection(lecture.OutOfClassWork, "授業時間外学修（予習・復習等）")}
-      {renderSection(lecture.Assessment, "成績評価の基準及び方法")}
+
+      {renderSection(lecture.Flow, '授業の進め方')}
+      {renderSection(lecture.OutOfClassWork, '授業時間外学修（予習・復習等）')}
+      {renderSection(lecture.Assessment, '成績評価の基準及び方法')}
 
       <div className="course-detail-section">
         <h3>関連する科目</h3>
         {renderRelatedCourses()}
       </div>
 
-      {renderSection(lecture.Prerequisite, "履修の条件")}
-      {renderSection(lecture.Note, "その他")}
-      {renderSection(lecture.Contact, "連絡先")}
-      {renderSection(lecture.OfficeHours, "オフィスアワー")}
+      {renderSection(lecture.Prerequisite, '履修の条件')}
+      {renderSection(lecture.Note, 'その他')}
+      {renderSection(lecture.Contact, '連絡先')}
+      {renderSection(lecture.OfficeHours, 'オフィスアワー')}
     </div>
   );
 };

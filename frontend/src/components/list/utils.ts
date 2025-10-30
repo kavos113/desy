@@ -1,32 +1,24 @@
-import { domain } from "../../../wailsjs/go/models";
+import { domain } from '../../../wailsjs/go/models';
 
 const DAY_OF_WEEK_LABELS: Record<string, string> = {
-  monday: "月",
-  tuesday: "火",
-  wednesday: "水",
-  thursday: "木",
-  friday: "金",
-  saturday: "土",
-  sunday: "日",
+  monday: '月',
+  tuesday: '火',
+  wednesday: '水',
+  thursday: '木',
+  friday: '金',
+  saturday: '土',
+  sunday: '日'
 };
 
 const SEMESTER_LABELS: Record<string, string> = {
-  spring: "春学期",
-  summer: "夏学期",
-  fall: "秋学期",
-  autumn: "秋学期",
-  winter: "冬学期",
+  spring: '春学期',
+  summer: '夏学期',
+  fall: '秋学期',
+  autumn: '秋学期',
+  winter: '冬学期'
 };
 
-const DAY_ORDER = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
+const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 type TimeTableGroup = {
   dayKey: string;
@@ -43,9 +35,9 @@ type PeriodRange = {
 
 export function formatTeachers(teachers: domain.Teacher[] | undefined): string {
   if (!teachers || teachers.length === 0) {
-    return "";
+    return '';
   }
-  return teachers.map((teacher) => teacher.Name).join(", ");
+  return teachers.map((teacher) => teacher.Name).join(', ');
 }
 
 export function formatTimetables(
@@ -53,7 +45,7 @@ export function formatTimetables(
   options?: { includeRoom?: boolean }
 ): string {
   if (!timetables || timetables.length === 0) {
-    return "";
+    return '';
   }
 
   const includeRoom = options?.includeRoom ?? true;
@@ -65,10 +57,10 @@ export function formatTimetables(
       return;
     }
 
-    const rawDay = timetable.DayOfWeek ?? "";
+    const rawDay = timetable.DayOfWeek ?? '';
     const dayKey = rawDay.toString().toLowerCase();
     const dayLabel = DAY_OF_WEEK_LABELS[dayKey] ?? rawDay;
-    const roomLabel = timetable.Room?.Name?.trim() ?? "";
+    const roomLabel = timetable.Room?.Name?.trim() ?? '';
     const periodValue = Number(timetable.Period);
     const hasPeriod = Number.isFinite(periodValue) && periodValue > 0;
 
@@ -94,7 +86,7 @@ export function formatTimetables(
         dayLabel,
         roomLabel,
         order: orderIndex === -1 ? Number.MAX_SAFE_INTEGER : orderIndex,
-        periods: new Set<number>(),
+        periods: new Set<number>()
       });
     }
 
@@ -110,7 +102,7 @@ export function formatTimetables(
       }
 
       if (left.roomLabel === right.roomLabel) {
-        return left.dayLabel.localeCompare(right.dayLabel, "ja");
+        return left.dayLabel.localeCompare(right.dayLabel, 'ja');
       }
 
       if (!left.roomLabel) {
@@ -119,19 +111,16 @@ export function formatTimetables(
       if (!right.roomLabel) {
         return 1;
       }
-      return left.roomLabel.localeCompare(right.roomLabel, "ja");
+      return left.roomLabel.localeCompare(right.roomLabel, 'ja');
     })
     .forEach((group) => {
       const periods = Array.from(group.periods).sort((a, b) => a - b);
       const ranges = compressPeriods(periods);
-      const roomSuffix =
-        includeRoom && group.roomLabel ? `(${group.roomLabel})` : "";
+      const roomSuffix = includeRoom && group.roomLabel ? `(${group.roomLabel})` : '';
 
       ranges.forEach((range) => {
         const periodLabel =
-          range.start === range.end
-            ? `${range.start}`
-            : `${range.start}-${range.end}`;
+          range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`;
         formatted.push(`${group.dayLabel}${periodLabel}${roomSuffix}`);
       });
     });
@@ -139,29 +128,25 @@ export function formatTimetables(
   const uniqueFallbacks = fallbacks.filter(Boolean);
 
   const result = [...formatted, ...uniqueFallbacks];
-  return Array.from(new Set(result)).join(", ");
+  return Array.from(new Set(result)).join(', ');
 }
 
-export function formatSemesters(
-  timetables: domain.TimeTable[] | undefined
-): string {
+export function formatSemesters(timetables: domain.TimeTable[] | undefined): string {
   if (!timetables || timetables.length === 0) {
-    return "";
+    return '';
   }
 
   const labels = timetables
     .map(
-      (timetable) =>
-        SEMESTER_LABELS[timetable.Semester?.toLowerCase() ?? ""] ??
-        timetable.Semester
+      (timetable) => SEMESTER_LABELS[timetable.Semester?.toLowerCase() ?? ''] ?? timetable.Semester
     )
     .filter((label): label is string => Boolean(label));
 
   if (labels.length === 0) {
-    return "";
+    return '';
   }
 
-  return Array.from(new Set(labels)).join(", ");
+  return Array.from(new Set(labels)).join(', ');
 }
 
 export function splitIntoLines(value: string | undefined | null): string[] {
@@ -206,15 +191,13 @@ function buildFallbackLabel(
   roomName: string | undefined,
   includeRoom: boolean
 ): string {
-  const dayPart = dayLabel ?? "";
+  const dayPart = dayLabel ?? '';
   const periodPart =
-    Number.isFinite(Number(period)) && Number(period) > 0
-      ? `${Number(period)}`
-      : "";
-  const roomPart = includeRoom && roomName ? `(${roomName})` : "";
+    Number.isFinite(Number(period)) && Number(period) > 0 ? `${Number(period)}` : '';
+  const roomPart = includeRoom && roomName ? `(${roomName})` : '';
 
   if (!dayPart && !periodPart && !roomPart) {
-    return "";
+    return '';
   }
 
   return `${dayPart}${periodPart}${roomPart}`;

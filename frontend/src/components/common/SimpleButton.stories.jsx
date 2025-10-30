@@ -1,16 +1,16 @@
-import SimpleButton from "./SimpleButton";
+import SimpleButton from './SimpleButton';
 
 export default {
-  title: "common/SimpleButton",
+  title: 'common/SimpleButton',
   component: SimpleButton,
   argTypes: {
-    text: {control: "text"},
-  },
+    text: { control: 'text' }
+  }
 };
 
 export const Default = {
   args: {
     primary: true,
-    text: "Click Me",
-  },
+    text: 'Click Me'
+  }
 };

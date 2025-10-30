@@ -1,12 +1,9 @@
-import type { Day, Period } from "../../constants";
+import type { Day, Period } from '../../constants';
 
-export type SearchComboBox = "university" | "department" | "year";
-export type SearchSearchBox = "title" | "lecturer";
-export type SearchCheckBox = "grade" | "quarter";
-export type SearchConditionKey =
-  | SearchComboBox
-  | SearchSearchBox
-  | SearchCheckBox;
+export type SearchComboBox = 'university' | 'department' | 'year';
+export type SearchSearchBox = 'title' | 'lecturer';
+export type SearchCheckBox = 'grade' | 'quarter';
+export type SearchConditionKey = SearchComboBox | SearchSearchBox | SearchCheckBox;
 
 export interface SearchTimetableSelection {
   day: Day;

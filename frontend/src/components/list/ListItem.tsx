@@ -1,7 +1,7 @@
-import { MouseEventHandler, useMemo } from "react";
-import { domain } from "../../../wailsjs/go/models";
-import { formatSemesters, formatTeachers, formatTimetables } from "./utils";
-import "./list.css";
+import { MouseEventHandler, useMemo } from 'react';
+import { domain } from '../../../wailsjs/go/models';
+import { formatSemesters, formatTeachers, formatTimetables } from './utils';
+import './list.css';
 
 type ListItemProps = {
   item: domain.LectureSummary;
@@ -21,14 +21,14 @@ const ListItem = ({ item, onClick, className }: ListItemProps) => {
     [item.Timetables]
   );
   const semesterText = useMemo(() => formatSemesters(item.Timetables), [item.Timetables]);
-  const creditText = item.Credit !== undefined && item.Credit !== null ? String(item.Credit) : "--";
+  const creditText = item.Credit !== undefined && item.Credit !== null ? String(item.Credit) : '--';
 
   const containerClassName = useMemo(() => {
-    const classList = ["item-wrapper", "list-item"];
+    const classList = ['item-wrapper', 'list-item'];
     if (className) {
       classList.push(className);
     }
-    return classList.join(" ");
+    return classList.join(' ');
   }, [className]);
 
   return (

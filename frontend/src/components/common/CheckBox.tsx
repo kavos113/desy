@@ -1,5 +1,5 @@
-import { ChangeEvent, useEffect, useState } from "react";
-import "./common.css";
+import { ChangeEvent, useEffect, useState } from 'react';
+import './common.css';
 
 type CheckBoxProps = {
   checkboxId: string;
@@ -8,12 +8,7 @@ type CheckBoxProps = {
   onChange?: (value: boolean) => void;
 };
 
-const CheckBox = ({
-  checkboxId,
-  content,
-  onCheckItem,
-  onChange,
-}: CheckBoxProps) => {
+const CheckBox = ({ checkboxId, content, onCheckItem, onChange }: CheckBoxProps) => {
   const [internalChecked, setInternalChecked] = useState(false);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {

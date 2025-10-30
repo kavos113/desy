@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import ComboBoxMenu from "./ComboBoxMenu";
-import { Menu } from "./Menu";
-import "./common.css";
+import { useEffect, useMemo, useState } from 'react';
+import ComboBoxMenu from './ComboBoxMenu';
+import { Menu } from './Menu';
+import './common.css';
 
 type ComboBoxProps = {
   items: Menu;
@@ -10,12 +10,7 @@ type ComboBoxProps = {
   className?: string;
 };
 
-const ComboBox = ({
-  items,
-  defaultSelectedItems,
-  onSelectItem,
-  className,
-}: ComboBoxProps) => {
+const ComboBox = ({ items, defaultSelectedItems, onSelectItem, className }: ComboBoxProps) => {
   const [selectedItems, setSelectedItems] = useState<string[]>(() => {
     return defaultSelectedItems ? [...defaultSelectedItems] : [];
   });
@@ -33,9 +28,7 @@ const ComboBox = ({
   const handleSelect = (key: string) => {
     setSelectedItems((previous) => {
       const exists = previous.includes(key);
-      const next = exists
-        ? previous.filter((value) => value !== key)
-        : [...previous, key];
+      const next = exists ? previous.filter((value) => value !== key) : [...previous, key];
 
       onSelectItem?.(next);
       return next;
@@ -43,7 +36,7 @@ const ComboBox = ({
   };
 
   return (
-    <div className={["combobox-box-container", className].filter(Boolean).join(" ")}>
+    <div className={['combobox-box-container', className].filter(Boolean).join(' ')}>
       <div className="comboMenu">
         <ComboBoxMenu items={items} selectedKeys={selectedKeySet} onSelect={handleSelect} />
       </div>

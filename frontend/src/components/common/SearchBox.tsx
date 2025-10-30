@@ -1,5 +1,5 @@
-import { ChangeEvent, useEffect, useState } from "react";
-import "./common.css";
+import { ChangeEvent, useEffect, useState } from 'react';
+import './common.css';
 
 type SearchBoxProps = {
   placeholder: string;
@@ -8,12 +8,7 @@ type SearchBoxProps = {
   onChange?: (value: string) => void;
 };
 
-const SearchBox = ({
-  placeholder,
-  value,
-  defaultValue = "",
-  onChange,
-}: SearchBoxProps) => {
+const SearchBox = ({ placeholder, value, defaultValue = '', onChange }: SearchBoxProps) => {
   const [internalValue, setInternalValue] = useState(defaultValue);
 
   useEffect(() => {

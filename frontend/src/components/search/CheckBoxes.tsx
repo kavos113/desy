@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import CheckBox from "../common/CheckBox";
-import "./search.css";
+import { useEffect, useState } from 'react';
+import CheckBox from '../common/CheckBox';
+import './search.css';
 
 type CheckBoxesProps = {
   checkboxId: string;
@@ -43,14 +43,7 @@ const CheckBoxes = ({ checkboxId, contents, onCheckItem }: CheckBoxesProps) => {
     <div className="check-boxes-container">
       {contents.map((content, index) => {
         const id = `${checkboxId}${index + 1}`;
-        return (
-          <CheckBox
-            key={id}
-            checkboxId={id}
-            content={content}
-            onCheckItem={handleCheck}
-          />
-        );
+        return <CheckBox key={id} checkboxId={id} content={content} onCheckItem={handleCheck} />;
       })}
     </div>
   );

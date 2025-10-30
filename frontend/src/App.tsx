@@ -1,6 +1,6 @@
-import "./App.css";
-import Title from "./components/Title";
-import Content from "./components/Content";
+import './App.css';
+import Title from './components/Title';
+import Content from './components/Content';
 
 const App = () => {
   return (

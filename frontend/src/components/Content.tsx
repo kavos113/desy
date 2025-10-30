@@ -1,12 +1,12 @@
-import { useCallback, useMemo, useState } from "react";
-import { domain } from "../../wailsjs/go/models";
-import SimpleButton from "./common/SimpleButton";
-import ListTable from "./list/ListTable";
-import Search from "./search/Search";
-import { formatTeachers, formatTimetables } from "./list/utils";
-import "./content.css";
+import { useCallback, useMemo, useState } from 'react';
+import { domain } from '../../wailsjs/go/models';
+import SimpleButton from './common/SimpleButton';
+import ListTable from './list/ListTable';
+import Search from './search/Search';
+import { formatTeachers, formatTimetables } from './list/utils';
+import './content.css';
 
-type SortKey = "title" | "code" | "lecturer" | "department" | "timetable";
+type SortKey = 'title' | 'code' | 'lecturer' | 'department' | 'timetable';
 
 type Comparator = (
   left: domain.LectureSummary,
@@ -15,7 +15,7 @@ type Comparator = (
 ) => number;
 
 const toComparableString = (value: string | undefined | null) => {
-  return (value ?? "").toString().trim().toLowerCase();
+  return (value ?? '').toString().trim().toLowerCase();
 };
 
 const compareText = (left: string, right: string, ascending: boolean) => {
@@ -31,18 +31,18 @@ const compareText = (left: string, right: string, ascending: boolean) => {
 };
 
 const buildComparators = (): Record<SortKey, Comparator> => ({
-  title: (left, right, ascending) => compareText(left.Title ?? "", right.Title ?? "", ascending),
-  code: (left, right, ascending) => compareText(left.Code ?? "", right.Code ?? "", ascending),
+  title: (left, right, ascending) => compareText(left.Title ?? '', right.Title ?? '', ascending),
+  code: (left, right, ascending) => compareText(left.Code ?? '', right.Code ?? '', ascending),
   lecturer: (left, right, ascending) =>
     compareText(formatTeachers(left.Teachers), formatTeachers(right.Teachers), ascending),
   department: (left, right, ascending) =>
-    compareText(left.Department ?? "", right.Department ?? "", ascending),
+    compareText(left.Department ?? '', right.Department ?? '', ascending),
   timetable: (left, right, ascending) =>
     compareText(
       formatTimetables(left.Timetables, { includeRoom: false }),
       formatTimetables(right.Timetables, { includeRoom: false }),
       ascending
-    ),
+    )
 });
 
 const Content = () => {
@@ -52,7 +52,7 @@ const Content = () => {
     code: true,
     lecturer: true,
     department: true,
-    timetable: true,
+    timetable: true
   });
   const [isSearchVisible, setIsSearchVisible] = useState(false);
 
@@ -79,7 +79,7 @@ const Content = () => {
 
       setSortState((previousSortState) => ({
         ...previousSortState,
-        [key]: !previousSortState[key],
+        [key]: !previousSortState[key]
       }));
     },
     [comparators, sortState]
@@ -94,7 +94,7 @@ const Content = () => {
   }, []);
 
   const searchPanelClassName = useMemo(() => {
-    return ["search-panel", isSearchVisible ? "search-visible" : ""].filter(Boolean).join(" ");
+    return ['search-panel', isSearchVisible ? 'search-visible' : ''].filter(Boolean).join(' ');
   }, [isSearchVisible]);
 
   return (
@@ -107,7 +107,7 @@ const Content = () => {
 };
 
 function isSortKey(value: string): value is SortKey {
-  return ["title", "code", "lecturer", "department", "timetable"].includes(value);
+  return ['title', 'code', 'lecturer', 'department', 'timetable'].includes(value);
 }
 
 export default Content;

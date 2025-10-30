@@ -1,22 +1,18 @@
-import { useCallback, useMemo, useState } from "react";
-import SimpleButton from "../common/SimpleButton";
-import FetchButton from "./FetchButton";
-import SearchField from "./SearchField";
+import { useCallback, useMemo, useState } from 'react';
+import SimpleButton from '../common/SimpleButton';
+import FetchButton from './FetchButton';
+import SearchField from './SearchField';
 import {
   dayToDomain,
   gradeLabelToLevel,
   parseKeywordInput,
   parseYearLabel,
-  periodToNumber,
-} from "../../constants";
-import type {
-  SearchConditionKey,
-  SearchState,
-  SearchTimetableSelection,
-} from "./types";
-import { SearchLectures } from "../../../wailsjs/go/main/App";
-import { domain } from "../../../wailsjs/go/models";
-import "./search.css";
+  periodToNumber
+} from '../../constants';
+import type { SearchConditionKey, SearchState, SearchTimetableSelection } from './types';
+import { SearchLectures } from '../../../wailsjs/go/main/App';
+import { domain } from '../../../wailsjs/go/models';
+import './search.css';
 
 type SearchProps = {
   className?: string;
@@ -32,24 +28,25 @@ const INITIAL_STATE: SearchState = {
   lecturer: [],
   grade: [],
   quarter: [],
-  timetable: [],
+  timetable: []
 };
 
 const buildSearchQuery = (state: SearchState) => {
-  const title = state.title[0] ?? "";
-  const teacherName = state.lecturer[0] ?? "";
-  const keywords = parseKeywordInput(state.title.join(" "));
+  const title = state.title[0] ?? '';
+  const teacherName = state.lecturer[0] ?? '';
+  const keywords = parseKeywordInput(state.title.join(' '));
   const levels = state.grade
     .map(gradeLabelToLevel)
-    .filter((value): value is number => typeof value === "number");
-  const yearValue = state.year
-    .map(parseYearLabel)
-    .find((value): value is number => typeof value === "number" && !Number.isNaN(value)) ?? 0;
+    .filter((value): value is number => typeof value === 'number');
+  const yearValue =
+    state.year
+      .map(parseYearLabel)
+      .find((value): value is number => typeof value === 'number' && !Number.isNaN(value)) ?? 0;
 
   const timetables = state.timetable.map((item) =>
     domain.TimeTable.createFrom({
       DayOfWeek: dayToDomain(item.day),
-      Period: periodToNumber(item.period),
+      Period: periodToNumber(item.period)
     })
   );
 
@@ -60,7 +57,7 @@ const buildSearchQuery = (state: SearchState) => {
     Year: yearValue,
     TeacherName: teacherName,
     TimeTables: timetables,
-    Levels: levels,
+    Levels: levels
   });
 };
 
@@ -69,15 +66,12 @@ const Search = ({ className, onSearch, onBack }: SearchProps) => {
   const [isSearching, setIsSearching] = useState(false);
 
   const wrapperClassName = useMemo(() => {
-    return ["search-wrapper", className].filter(Boolean).join(" ");
+    return ['search-wrapper', className].filter(Boolean).join(' ');
   }, [className]);
 
-  const handleConditionChange = useCallback(
-    (key: SearchConditionKey, items: string[]) => {
-      setCondition((previous) => ({ ...previous, [key]: items }));
-    },
-    []
-  );
+  const handleConditionChange = useCallback((key: SearchConditionKey, items: string[]) => {
+    setCondition((previous) => ({ ...previous, [key]: items }));
+  }, []);
 
   const handleTimetableChange = useCallback((items: SearchTimetableSelection[]) => {
     setCondition((previous) => ({ ...previous, timetable: items }));
@@ -91,7 +85,7 @@ const Search = ({ className, onSearch, onBack }: SearchProps) => {
       onSearch?.(results);
       onBack?.();
     } catch (error) {
-      console.error("SearchLectures failed", error);
+      console.error('SearchLectures failed', error);
     } finally {
       setIsSearching(false);
     }
@@ -101,9 +95,9 @@ const Search = ({ className, onSearch, onBack }: SearchProps) => {
     onBack?.();
   }, [onBack]);
 
-  const selectedUniversity = useMemo(() => condition.university.join(", "), [condition.university]);
-  const selectedDepartment = useMemo(() => condition.department.join(", "), [condition.department]);
-  const selectedYear = useMemo(() => condition.year.join(", "), [condition.year]);
+  const selectedUniversity = useMemo(() => condition.university.join(', '), [condition.university]);
+  const selectedDepartment = useMemo(() => condition.department.join(', '), [condition.department]);
+  const selectedYear = useMemo(() => condition.year.join(', '), [condition.year]);
 
   return (
     <div className={wrapperClassName}>
@@ -115,7 +109,12 @@ const Search = ({ className, onSearch, onBack }: SearchProps) => {
         onTimetableChange={handleTimetableChange}
       />
       <div>
-        <SimpleButton text="Search" className="button" onClick={handleSearch} disabled={isSearching} />
+        <SimpleButton
+          text="Search"
+          className="button"
+          onClick={handleSearch}
+          disabled={isSearching}
+        />
         <p>大学: {selectedUniversity}</p>
         <p>開講: {selectedDepartment}</p>
         <p>年度: {selectedYear}</p>

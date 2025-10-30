@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
-import SimpleButton from "../common/SimpleButton";
-import "./search.css";
-import { Greet, Scrape, ScrapeAll, ScrapeTest } from "../../../wailsjs/go/main/App";
-import { EventsOn } from "../../../wailsjs/runtime/runtime";
+import { useCallback, useEffect, useState } from 'react';
+import SimpleButton from '../common/SimpleButton';
+import './search.css';
+import { Greet, Scrape, ScrapeAll, ScrapeTest } from '../../../wailsjs/go/main/App';
+import { EventsOn } from '../../../wailsjs/runtime/runtime';
 
-const DEFAULT_STATUS = "Not fetched";
-const COMPLETE_STATUS = "完了しました";
+const DEFAULT_STATUS = 'Not fetched';
+const COMPLETE_STATUS = '完了しました';
 
 type ScrapeProgressPayload = {
   total?: number;
@@ -22,32 +22,41 @@ type FetchStatusEventPayload = ScrapeProgressPayload | string | number | null | 
 
 type Unsubscribe = () => void;
 
-const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
-const normalizeProgress = (payload: ScrapeProgressPayload): { total: number; current: number; code?: string; title?: string } | null => {
+const normalizeProgress = (
+  payload: ScrapeProgressPayload
+): { total: number; current: number; code?: string; title?: string } | null => {
   if (!isObject(payload)) {
     return null;
   }
 
   const totalValue = payload.total ?? payload.Total;
-  if (typeof totalValue !== "number" || Number.isNaN(totalValue)) {
+  if (typeof totalValue !== 'number' || Number.isNaN(totalValue)) {
     return null;
   }
 
   const currentValue = payload.current ?? payload.Current;
-  const current = typeof currentValue === "number" && !Number.isNaN(currentValue) ? currentValue : 0;
+  const current =
+    typeof currentValue === 'number' && !Number.isNaN(currentValue) ? currentValue : 0;
   const code = (payload.code ?? payload.Code) || undefined;
   const title = (payload.title ?? payload.Title) || undefined;
 
   return {
     total: Math.max(0, totalValue),
     current: Math.max(0, current),
-    code: typeof code === "string" && code.trim().length > 0 ? code.trim() : undefined,
-    title: typeof title === "string" && title.trim().length > 0 ? title.trim() : undefined,
+    code: typeof code === 'string' && code.trim().length > 0 ? code.trim() : undefined,
+    title: typeof title === 'string' && title.trim().length > 0 ? title.trim() : undefined
   };
 };
 
-const formatProgressStatus = (progress: { total: number; current: number; code?: string; title?: string }): string => {
+const formatProgressStatus = (progress: {
+  total: number;
+  current: number;
+  code?: string;
+  title?: string;
+}): string => {
   const { total, current, code, title } = progress;
   const safeTotal = total > 0 ? total : 0;
   const safeCurrent = current > 0 ? current : 0;
@@ -58,7 +67,7 @@ const formatProgressStatus = (progress: { total: number; current: number; code?:
   if (title) {
     parts.push(title);
   }
-  return parts.join(" ");
+  return parts.join(' ');
 };
 
 const FetchButton = () => {
@@ -69,7 +78,7 @@ const FetchButton = () => {
     let unsubscribe: Unsubscribe | undefined;
 
     try {
-      const result = EventsOn("fetch_status", (payload: FetchStatusEventPayload) => {
+      const result = EventsOn('fetch_status', (payload: FetchStatusEventPayload) => {
         if (isObject(payload)) {
           const progress = normalizeProgress(payload as ScrapeProgressPayload);
           if (progress) {
@@ -86,7 +95,7 @@ const FetchButton = () => {
         }
       });
 
-      if (typeof result === "function") {
+      if (typeof result === 'function') {
         unsubscribe = result;
       }
     } catch (error) {
@@ -100,13 +109,13 @@ const FetchButton = () => {
 
   const handleFetch = useCallback(async () => {
     setIsFetching(true);
-    setStatus("Fetching...");
+    setStatus('Fetching...');
     try {
       await Scrape();
       setStatus(COMPLETE_STATUS);
     } catch (error) {
-      console.error("Scrape failed", error);
-      setStatus("Fetch failed");
+      console.error('Scrape failed', error);
+      setStatus('Fetch failed');
     } finally {
       setIsFetching(false);
     }
@@ -114,13 +123,13 @@ const FetchButton = () => {
 
   const handleFetchTest = useCallback(async () => {
     setIsFetching(true);
-    setStatus("Fetch-Test...");
+    setStatus('Fetch-Test...');
     try {
       await ScrapeTest();
       setStatus(COMPLETE_STATUS);
     } catch (error) {
-      console.error("Scrape failed", error);
-      setStatus("Fetch-Test failed");
+      console.error('Scrape failed', error);
+      setStatus('Fetch-Test failed');
     } finally {
       setIsFetching(false);
     }
@@ -128,26 +137,26 @@ const FetchButton = () => {
 
   const handleGreeting = useCallback(async () => {
     try {
-      const message = await Greet("Fetch-Test");
+      const message = await Greet('Fetch-Test');
       setStatus(message);
     } catch (error) {
-      console.error("Greet failed", error);
-      setStatus("Greeting failed");
+      console.error('Greet failed', error);
+      setStatus('Greeting failed');
     }
   }, []);
 
   const handleFetchAll = useCallback(async () => {
     setIsFetching(true);
-    setStatus("Fetch-All...");  
+    setStatus('Fetch-All...');
     try {
       await ScrapeAll();
       setStatus(COMPLETE_STATUS);
     } catch (error) {
-      console.error("ScrapeAll failed", error);
-      setStatus("Fetch-All failed");
+      console.error('ScrapeAll failed', error);
+      setStatus('Fetch-All failed');
     } finally {
       setIsFetching(false);
-    } 
+    }
   }, []);
 
   return (

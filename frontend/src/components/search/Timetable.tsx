@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { DAYS, Day, PERIODS, Period } from "../../constants";
-import type { SearchTimetableSelection } from "./types";
-import "./search.css";
+import { useEffect, useMemo, useState } from 'react';
+import { DAYS, Day, PERIODS, Period } from '../../constants';
+import type { SearchTimetableSelection } from './types';
+import './search.css';
 
 type TimetableState = Record<Day, Record<Period, boolean>>;
 
@@ -11,10 +11,13 @@ type TimetableProps = {
 
 const createInitialState = (): TimetableState => {
   return DAYS.reduce<TimetableState>((acc, day) => {
-    acc[day] = PERIODS.reduce<Record<Period, boolean>>((rowAcc, period) => {
-      rowAcc[period] = false;
-      return rowAcc;
-    }, {} as Record<Period, boolean>);
+    acc[day] = PERIODS.reduce<Record<Period, boolean>>(
+      (rowAcc, period) => {
+        rowAcc[period] = false;
+        return rowAcc;
+      },
+      {} as Record<Period, boolean>
+    );
     return acc;
   }, {} as TimetableState);
 };
@@ -74,11 +77,7 @@ const Timetable = ({ onCheckItem }: TimetableProps) => {
           <tr className="days">
             <th className="left"></th>
             {dayHeaders.map((day) => (
-              <th
-                key={day}
-                className={`mainContent day day-${day}`}
-                onClick={() => toggleDay(day)}
-              >
+              <th key={day} className={`mainContent day day-${day}`} onClick={() => toggleDay(day)}>
                 {day}
               </th>
             ))}
@@ -92,14 +91,9 @@ const Timetable = ({ onCheckItem }: TimetableProps) => {
               </th>
               {dayHeaders.map((day) => {
                 const isChecked = checked[day][period];
-                const classNames = [
-                  "mainContent",
-                  "box",
-                  `box-${day}`,
-                  isChecked ? "checked" : "",
-                ]
+                const classNames = ['mainContent', 'box', `box-${day}`, isChecked ? 'checked' : '']
                   .filter(Boolean)
-                  .join(" ");
+                  .join(' ');
 
                 return (
                   <td

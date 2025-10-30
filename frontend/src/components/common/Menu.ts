@@ -7,7 +7,7 @@ export interface MenuNode {
 export type Menu = MenuLeaf | MenuNode;
 
 export function isMenuNode(value: unknown): value is MenuNode {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 export function isMenuLeaf(value: unknown): value is MenuLeaf {

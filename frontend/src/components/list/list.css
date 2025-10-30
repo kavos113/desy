@@ -227,7 +227,7 @@
 }
 
 .course-detail-title::before {
-  content: "";
+  content: '';
   border-bottom: 2px solid var(--stsub);
   position: absolute;
   top: calc(100% + 6px);

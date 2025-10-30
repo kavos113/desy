@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
-import "./common.css";
-import { Menu, isMenuLeaf, isMenuNode } from "./Menu";
+import { useMemo, useState } from 'react';
+import './common.css';
+import { Menu, isMenuLeaf, isMenuNode } from './Menu';
 
 type ComboBoxMenuProps = {
   items: Menu;
@@ -9,16 +9,11 @@ type ComboBoxMenuProps = {
   className?: string;
 };
 
-const ComboBoxMenu = ({
-  items,
-  selectedKeys,
-  onSelect,
-  className,
-}: ComboBoxMenuProps) => {
+const ComboBoxMenu = ({ items, selectedKeys, onSelect, className }: ComboBoxMenuProps) => {
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
 
   const containerClassName = useMemo(() => {
-    return ["menu", className].filter(Boolean).join(" ");
+    return ['menu', className].filter(Boolean).join(' ');
   }, [className]);
 
   const showSubMenu = (key: string) => {
@@ -51,11 +46,11 @@ const ComboBoxMenu = ({
           return (
             <li
               key={`${item}-${index}`}
-              className={`menuItem ${checked ? "check" : "notCheck"}`}
+              className={`menuItem ${checked ? 'check' : 'notCheck'}`}
               onClick={() => onSelect(item)}
             >
               <span className="menuText">{item}</span>
-              {checked ? "\u2713" : ""}
+              {checked ? '\u2713' : ''}
             </li>
           );
         })}
@@ -83,11 +78,11 @@ const ComboBoxMenu = ({
           >
             <button
               type="button"
-              className={`menuTitle ${checked ? "check" : "notCheck"}`}
+              className={`menuTitle ${checked ? 'check' : 'notCheck'}`}
               onClick={() => onSelect(key)}
             >
               <span className="menuText">{key}</span>
-              {checked ? "\u2713" : ""}
+              {checked ? '\u2713' : ''}
               {isMenuNode(value) ? <span className="arrow">▶</span> : null}
             </button>
             {isMenuNode(value) ? (
@@ -95,7 +90,7 @@ const ComboBoxMenu = ({
                 items={value}
                 selectedKeys={selectedKeys}
                 onSelect={onSelect}
-                className={`subMenu ${open ? "open" : "close"}`}
+                className={`subMenu ${open ? 'open' : 'close'}`}
               />
             ) : null}
             {isMenuLeaf(value) ? (
@@ -103,7 +98,7 @@ const ComboBoxMenu = ({
                 items={value}
                 selectedKeys={selectedKeys}
                 onSelect={onSelect}
-                className={`subMenu ${open ? "open" : "close"}`}
+                className={`subMenu ${open ? 'open' : 'close'}`}
               />
             ) : null}
           </li>
