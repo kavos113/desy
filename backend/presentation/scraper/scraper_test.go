@@ -34,6 +34,9 @@ func TestParseCourseList(t *testing.T) {
 	if first.DetailURL != "https://syllabus.s.isct.ac.jp/courses/2025/4/0-904-342200-0-0/202534819" {
 		t.Errorf("unexpected url: %s", first.DetailURL)
 	}
+	if first.Year != 2025 {
+		t.Errorf("unexpected year: %d", first.Year)
+	}
 
 	third := items[2]
 	if third.Code != "MCS.T201" {
@@ -41,6 +44,9 @@ func TestParseCourseList(t *testing.T) {
 	}
 	if third.DetailURL == "" {
 		t.Fatalf("third detail url should not be empty")
+	}
+	if third.Year != 2025 {
+		t.Errorf("unexpected third year: %d", third.Year)
 	}
 
 	f, err := os.Open("fixture/course_list_full.html")
@@ -63,6 +69,9 @@ func TestParseCourseList(t *testing.T) {
 	}
 	if first.DetailURL != "https://syllabus.s.isct.ac.jp/courses/2025/4/0-904-342200-0-0/202534815" {
 		t.Errorf("unexpected url: %s", first.DetailURL)
+	}
+	if first.Year != 2025 {
+		t.Errorf("unexpected year: %d", first.Year)
 	}
 }
 

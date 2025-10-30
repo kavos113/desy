@@ -579,7 +579,11 @@ func (r *LectureRepository) MigrateRelatedCourses(ctx context.Context) (int, err
 		return 0, fmt.Errorf("begin migrate related courses transaction: %w", err)
 	}
 
-	rows, err := tx.QueryContext(ctx, `SELECT lecture_id, code FROM related_course_codes`)
+	rows, err := tx.QueryContext(ctx, `
+		SELECT r.lecture_id, COALESCE(l.year, 0) AS lecture_year, r.code
+		FROM related_course_codes r
+		INNER JOIN lectures l ON l.id = r.lecture_id
+	`)
 	if err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
 			return 0, fmt.Errorf("rollback on select related course codes: %v (original error: %w)", rbErr, err)
@@ -589,6 +593,7 @@ func (r *LectureRepository) MigrateRelatedCourses(ctx context.Context) (int, err
 
 	type pendingMapping struct {
 		lectureID  int
+		year       int
 		normalized string
 	}
 
@@ -598,9 +603,10 @@ func (r *LectureRepository) MigrateRelatedCourses(ctx context.Context) (int, err
 	for rows.Next() {
 		var (
 			lectureID int
+			year      int
 			code      string
 		)
-		if err := rows.Scan(&lectureID, &code); err != nil {
+		if err := rows.Scan(&lectureID, &year, &code); err != nil {
 			rows.Close()
 			if rbErr := tx.Rollback(); rbErr != nil {
 				return 0, fmt.Errorf("rollback on scan related course code: %v (original error: %w)", rbErr, err)
@@ -613,7 +619,7 @@ func (r *LectureRepository) MigrateRelatedCourses(ctx context.Context) (int, err
 			continue
 		}
 
-		mappings = append(mappings, pendingMapping{lectureID: lectureID, normalized: normalized})
+		mappings = append(mappings, pendingMapping{lectureID: lectureID, year: year, normalized: normalized})
 		codeSet[normalized] = struct{}{}
 	}
 
@@ -638,13 +644,54 @@ func (r *LectureRepository) MigrateRelatedCourses(ctx context.Context) (int, err
 		codes = append(codes, code)
 	}
 
-	codeToID, err := r.findLectureIDsByCodesTx(tx, codes)
+	type lectureCandidate struct {
+		id   int
+		year int
+	}
+
+	targets := make(map[string][]lectureCandidate, len(codes))
+
+	placeholders := placeholders(len(codes))
+	query := fmt.Sprintf(`SELECT id, code, COALESCE(year, 0) FROM lectures WHERE UPPER(code) IN (%s)`, placeholders)
+	args := make([]any, len(codes))
+	for idx, code := range codes {
+		args[idx] = code
+	}
+
+	rows, err = tx.QueryContext(ctx, query, args...)
 	if err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
 			return 0, fmt.Errorf("rollback on resolve lecture ids: %v (original error: %w)", rbErr, err)
 		}
-		return 0, err
+		return 0, fmt.Errorf("select lectures for related courses: %w", err)
 	}
+	for rows.Next() {
+		var (
+			id   int
+			code string
+			year int
+		)
+		if err := rows.Scan(&id, &code, &year); err != nil {
+			rows.Close()
+			if rbErr := tx.Rollback(); rbErr != nil {
+				return 0, fmt.Errorf("rollback on scan lecture ids: %v (original error: %w)", rbErr, err)
+			}
+			return 0, fmt.Errorf("scan lecture ids: %w", err)
+		}
+		normalized := normalizeCourseCode(code)
+		if normalized == "" {
+			continue
+		}
+		targets[normalized] = append(targets[normalized], lectureCandidate{id: id, year: year})
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return 0, fmt.Errorf("rollback after iterating lecture ids: %v (original error: %w)", rbErr, err)
+		}
+		return 0, fmt.Errorf("iterate lecture ids: %w", err)
+	}
+	rows.Close()
 
 	stmt, err := tx.PrepareContext(ctx, `INSERT OR IGNORE INTO related_courses (lecture_id, related_lecture_id) VALUES (?, ?)`)
 	if err != nil {
@@ -659,8 +706,32 @@ func (r *LectureRepository) MigrateRelatedCourses(ctx context.Context) (int, err
 	type pair struct{ src, dst int }
 	seenPairs := make(map[pair]struct{})
 
+	selectTarget := func(candidates []lectureCandidate, sourceYear int) (int, bool) {
+		if len(candidates) == 0 {
+			return 0, false
+		}
+		if sourceYear > 0 {
+			for _, candidate := range candidates {
+				if candidate.year == sourceYear {
+					return candidate.id, true
+				}
+			}
+			return 0, false
+		}
+		if len(candidates) == 1 {
+			return candidates[0].id, true
+		}
+		for _, candidate := range candidates {
+			if candidate.year == 0 {
+				return candidate.id, true
+			}
+		}
+		return candidates[0].id, true
+	}
+
 	for _, mapping := range mappings {
-		targetID, ok := codeToID[mapping.normalized]
+		candidates := targets[mapping.normalized]
+		targetID, ok := selectTarget(candidates, mapping.year)
 		if !ok {
 			continue
 		}

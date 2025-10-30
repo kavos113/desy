@@ -232,6 +232,33 @@ func TestScraperUsecaseScrapeCourseListAndSaveSkipsUnchanged(t *testing.T) {
 	}
 }
 
+func TestShouldSkipLectureConsidersYear(t *testing.T) {
+	existing := &domain.Lecture{
+		Title:     "法学（憲法）Ａ",
+		Code:      "LAH.S101",
+		OpenTerm:  "3Q",
+		Year:      2024,
+		UpdatedAt: time.Date(2025, time.March, 19, 0, 0, 0, 0, time.UTC),
+	}
+
+	item := scraper.CourseListItem{
+		Code:      "LAH.S101",
+		Title:     "法学（憲法）Ａ",
+		OpenTerm:  "3Q",
+		Year:      2025,
+		UpdatedAt: time.Date(2025, time.March, 19, 0, 0, 0, 0, time.UTC),
+	}
+
+	if shouldSkipLecture(existing, item) {
+		t.Fatalf("expected lecture not to be skipped when year differs")
+	}
+
+	existing.Year = 2025
+	if !shouldSkipLecture(existing, item) {
+		t.Fatalf("expected lecture to be skipped when year matches and no other changes")
+	}
+}
+
 func TestScraperUsecaseScrapeTopPageAndSave(t *testing.T) {
 	repo, timetableRepo, _ := newUsecaseTestRepository(t)
 

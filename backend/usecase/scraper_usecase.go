@@ -400,6 +400,9 @@ func shouldSkipLecture(existing *domain.Lecture, item scraper.CourseListItem) bo
 	if normalizeComparable(existing.OpenTerm) != normalizeComparable(item.OpenTerm) {
 		return false
 	}
+	if item.Year > 0 && existing.Year != item.Year {
+		return false
+	}
 	if !sameDate(existing.UpdatedAt, item.UpdatedAt) {
 		return false
 	}

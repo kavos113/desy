@@ -20,6 +20,7 @@ type CourseListItem struct {
 	Title     string
 	DetailURL string
 	OpenTerm  string
+	Year      int
 	UpdatedAt time.Time
 }
 
@@ -75,7 +76,11 @@ func ParseCourseList(r io.Reader, base string) ([]CourseListItem, error) {
 			DetailURL: detail,
 		}
 		if cols.Length() > 4 {
-			item.OpenTerm = strings.TrimSpace(selectionToText(cols.Eq(4)))
+			openTerm := strings.TrimSpace(selectionToText(cols.Eq(4)))
+			item.OpenTerm = openTerm
+			if year := parseFirstInt(openTerm); year >= 1900 && year <= 2100 {
+				item.Year = year
+			}
 		}
 		if cols.Length() > 5 {
 			item.UpdatedAt = parseSyllabusDate(selectionToText(cols.Eq(5)))

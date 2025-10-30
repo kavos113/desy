@@ -702,6 +702,70 @@ func TestLectureRepositoryMigrateRelatedCourses(t *testing.T) {
 	}
 }
 
+func TestLectureRepositoryMigrateRelatedCoursesPrefersSameYear(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code, year) VALUES (?, ?, ?, ?, ?)`, 1, "Test University", "Course 2024", "AAA100", 2024)
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code, year) VALUES (?, ?, ?, ?, ?)`, 2, "Test University", "Course 2025", "AAA100", 2025)
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code, year) VALUES (?, ?, ?, ?, ?)`, 3, "Test University", "Source Course", "BBB100", 2025)
+
+	mustExec(t, db, `INSERT INTO related_course_codes (lecture_id, code) VALUES (?, ?)`, 3, "AAA100")
+
+	inserted, err := repo.MigrateRelatedCourses(context.Background())
+	if err != nil {
+		t.Fatalf("MigrateRelatedCourses returned error: %v", err)
+	}
+	if inserted != 1 {
+		t.Fatalf("expected 1 relation, got %d", inserted)
+	}
+
+	rows, err := db.Query(`SELECT related_lecture_id FROM related_courses WHERE lecture_id = ?`, 3)
+	if err != nil {
+		t.Fatalf("select related courses: %v", err)
+	}
+	defer rows.Close()
+
+	var related []int
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			t.Fatalf("scan related course: %v", err)
+		}
+		related = append(related, id)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("iterate related courses: %v", err)
+	}
+	if len(related) != 1 || related[0] != 2 {
+		t.Fatalf("unexpected related courses: %#v", related)
+	}
+}
+
+func TestLectureRepositoryMigrateRelatedCoursesSkipsDifferentYear(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code, year) VALUES (?, ?, ?, ?, ?)`, 1, "Test University", "Course 2024", "AAA100", 2024)
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, code, year) VALUES (?, ?, ?, ?, ?)`, 2, "Test University", "Source Course", "BBB100", 2025)
+
+	mustExec(t, db, `INSERT INTO related_course_codes (lecture_id, code) VALUES (?, ?)`, 2, "AAA100")
+
+	inserted, err := repo.MigrateRelatedCourses(context.Background())
+	if err != nil {
+		t.Fatalf("MigrateRelatedCourses returned error: %v", err)
+	}
+	if inserted != 0 {
+		t.Fatalf("expected no relations, got %d", inserted)
+	}
+
+	var count int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM related_courses`).Scan(&count); err != nil {
+		t.Fatalf("count related courses: %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("expected no related courses, found %d", count)
+	}
+}
+
 func newTestRepository(t *testing.T) (*LectureRepository, *sql.DB) {
 	t.Helper()
 
