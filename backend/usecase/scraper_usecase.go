@@ -45,15 +45,16 @@ type ScraperUsecase interface {
 }
 
 type scraperUsecase struct {
-	fetcher     Fetcher
-	lectureRepo domain.LectureRepository
-	parser      scraper.Parser
-	delay       time.Duration
-	reporter    ScrapeProgressReporter
+	fetcher       Fetcher
+	lectureRepo   domain.LectureRepository
+	timetableRepo domain.TimeTableRepository
+	parser        scraper.Parser
+	delay         time.Duration
+	reporter      ScrapeProgressReporter
 }
 
 // NewScraperUsecase constructs a scraper usecase instance.
-func NewScraperUsecase(fetcher Fetcher, lectureRepo domain.LectureRepository, parser scraper.Parser, delay time.Duration) ScraperUsecase {
+func NewScraperUsecase(fetcher Fetcher, lectureRepo domain.LectureRepository, timetableRepo domain.TimeTableRepository, parser scraper.Parser, delay time.Duration) ScraperUsecase {
 	if parser == nil {
 		parser = scraper.NewParser()
 	}
@@ -61,10 +62,11 @@ func NewScraperUsecase(fetcher Fetcher, lectureRepo domain.LectureRepository, pa
 		delay = defaultScrapeDelay
 	}
 	return &scraperUsecase{
-		fetcher:     fetcher,
-		lectureRepo: lectureRepo,
-		parser:      parser,
-		delay:       delay,
+		fetcher:       fetcher,
+		lectureRepo:   lectureRepo,
+		timetableRepo: timetableRepo,
+		parser:        parser,
+		delay:         delay,
 	}
 }
 
@@ -191,6 +193,12 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 		return nil, err
 	}
 
+	if uc.timetableRepo != nil {
+		if _, err := uc.timetableRepo.ExpandTimetableRanges(ctx); err != nil {
+			return nil, fmt.Errorf("expand timetable ranges: %w", err)
+		}
+	}
+
 	return lectures, nil
 }
 
@@ -255,6 +263,12 @@ func (uc *scraperUsecase) ScrapeCourseDetailAndSave(ctx context.Context, detailU
 		return nil, err
 	}
 
+	if uc.timetableRepo != nil {
+		if _, err := uc.timetableRepo.ExpandTimetableRanges(ctx); err != nil {
+			return nil, fmt.Errorf("expand timetable ranges: %w", err)
+		}
+	}
+
 	return lecture, nil
 }
 
@@ -315,6 +329,12 @@ func (uc *scraperUsecase) ScrapeTopPageAndSave(ctx context.Context, year int) ([
 
 	if _, err := uc.lectureRepo.MigrateRelatedCourses(ctx); err != nil {
 		return nil, fmt.Errorf("migrate related courses: %w", err)
+	}
+
+	if uc.timetableRepo != nil {
+		if _, err := uc.timetableRepo.ExpandTimetableRanges(ctx); err != nil {
+			return nil, fmt.Errorf("expand timetable ranges: %w", err)
+		}
 	}
 
 	return aggregated, nil

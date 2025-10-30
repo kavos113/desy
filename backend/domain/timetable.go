@@ -1,6 +1,9 @@
 package domain
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
 type Semester string
 
@@ -128,4 +131,5 @@ type TimeTableRepository interface {
 	Creates(timetables []TimeTable) error
 	Update(timetable *TimeTable) error
 	Delete(lectureID int) error
+	ExpandTimetableRanges(ctx context.Context) (int, error)
 }

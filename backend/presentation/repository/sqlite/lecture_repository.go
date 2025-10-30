@@ -673,6 +673,7 @@ func (r *LectureRepository) MigrateRelatedCourses(ctx context.Context) (int, err
 	return inserted, nil
 }
 
+// ExpandTimetableRanges inserts missing timetable periods for entries that were previously stored as only the start and end of a range.
 // Update updates an existing lecture aggregate.
 func (r *LectureRepository) Update(lecture *domain.Lecture) error {
 	return ErrNotImplemented

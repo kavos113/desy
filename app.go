@@ -36,8 +36,13 @@ func NewApp() *App {
 		panic(fmt.Errorf("init lecture repository: %w", err))
 	}
 
+	timetableRepo, err := sqlite.NewTimetableRepository(db)
+	if err != nil {
+		panic(fmt.Errorf("init timetable repository: %w", err))
+	}
+
 	fetcher := usecase.NewHTTPFetcher(&http.Client{Timeout: 15 * time.Second})
-	scraperUsecase := usecase.NewScraperUsecase(fetcher, lectureRepo, scraper.NewParser(), 3*time.Second)
+	scraperUsecase := usecase.NewScraperUsecase(fetcher, lectureRepo, timetableRepo, scraper.NewParser(), 3*time.Second)
 
 	return &App{
 		db:             db,

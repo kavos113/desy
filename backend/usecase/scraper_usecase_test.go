@@ -20,7 +20,7 @@ import (
 const testDataSourceName = "file::memory:?cache=shared"
 
 func TestScraperUsecaseScrapeCourseDetailAndSave(t *testing.T) {
-	repo, _ := newUsecaseTestRepository(t)
+	repo, timetableRepo, _ := newUsecaseTestRepository(t)
 	detailURL := "https://example.com/courses/2025/LAH.S101"
 	detailURLEnglish := buildEnglishDetailURL(detailURL)
 
@@ -29,7 +29,7 @@ func TestScraperUsecaseScrapeCourseDetailAndSave(t *testing.T) {
 		detailURLEnglish: readFixture(t, "course_detail_en.html"),
 	})
 
-	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser(), 0)
+	usecase := NewScraperUsecase(fetcher, repo, timetableRepo, scraper.NewParser(), 0)
 
 	lecture, err := usecase.ScrapeCourseDetailAndSave(context.Background(), detailURL)
 	if err != nil {
@@ -80,7 +80,7 @@ func TestScraperUsecaseScrapeCourseDetailAndSave(t *testing.T) {
 }
 
 func TestScraperUsecaseScrapeCourseListAndSave(t *testing.T) {
-	repo, _ := newUsecaseTestRepository(t)
+	repo, timetableRepo, _ := newUsecaseTestRepository(t)
 
 	listURL := "https://example.com/list"
 	detailURL := "https://example.com/courses/2025/LAH.S101"
@@ -109,7 +109,7 @@ func TestScraperUsecaseScrapeCourseListAndSave(t *testing.T) {
 		detailURLEnglish: readFixture(t, "course_detail_en.html"),
 	})
 
-	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser(), 0)
+	usecase := NewScraperUsecase(fetcher, repo, timetableRepo, scraper.NewParser(), 0)
 	reporter := &collectingProgressReporter{}
 	usecase.SetProgressReporter(reporter)
 	t.Cleanup(func() {
@@ -187,7 +187,7 @@ func TestScraperUsecaseScrapeCourseListAndSave(t *testing.T) {
 }
 
 func TestScraperUsecaseScrapeCourseListAndSaveSkipsUnchanged(t *testing.T) {
-	repo, _ := newUsecaseTestRepository(t)
+	repo, timetableRepo, _ := newUsecaseTestRepository(t)
 
 	parser := scraper.NewParser()
 	lecture, err := parser.ParseCourseDetail(strings.NewReader(readFixture(t, "course_detail.html")), "https://example.com/courses/2025/LAH.S101")
@@ -221,7 +221,7 @@ func TestScraperUsecaseScrapeCourseListAndSaveSkipsUnchanged(t *testing.T) {
 		listURL: listHTML,
 	})
 
-	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser(), 0)
+	usecase := NewScraperUsecase(fetcher, repo, timetableRepo, scraper.NewParser(), 0)
 
 	lectures, err := usecase.ScrapeCourseListAndSave(context.Background(), listURL, baseURL)
 	if err != nil {
@@ -233,7 +233,7 @@ func TestScraperUsecaseScrapeCourseListAndSaveSkipsUnchanged(t *testing.T) {
 }
 
 func TestScraperUsecaseScrapeTopPageAndSave(t *testing.T) {
-	repo, _ := newUsecaseTestRepository(t)
+	repo, timetableRepo, _ := newUsecaseTestRepository(t)
 
 	listURL := scraper.TopPageURL + "/courses/2025/4/mock-list"
 	detailURL := scraper.TopPageURL + "/courses/2025/LAH.S101"
@@ -264,7 +264,7 @@ func TestScraperUsecaseScrapeTopPageAndSave(t *testing.T) {
 		detailURLEnglish:   readFixture(t, "course_detail_en.html"),
 	})
 
-	usecase := NewScraperUsecase(fetcher, repo, scraper.NewParser(), 0)
+	usecase := NewScraperUsecase(fetcher, repo, timetableRepo, scraper.NewParser(), 0)
 	reporter := &collectingProgressReporter{}
 	usecase.SetProgressReporter(reporter)
 	t.Cleanup(func() {
@@ -300,7 +300,7 @@ func TestScraperUsecaseScrapeTopPageAndSave(t *testing.T) {
 	}
 }
 
-func newUsecaseTestRepository(t *testing.T) (domain.LectureRepository, *sql.DB) {
+func newUsecaseTestRepository(t *testing.T) (domain.LectureRepository, domain.TimeTableRepository, *sql.DB) {
 	t.Helper()
 
 	db, err := sql.Open("sqlite", testDataSourceName)
@@ -316,11 +316,17 @@ func newUsecaseTestRepository(t *testing.T) (domain.LectureRepository, *sql.DB) 
 		t.Fatalf("create lecture repository: %v", err)
 	}
 
+	timetableRepo, err := sqlite.NewTimetableRepository(db)
+	if err != nil {
+		db.Close()
+		t.Fatalf("create timetable repository: %v", err)
+	}
+
 	t.Cleanup(func() {
 		db.Close()
 	})
 
-	return repo, db
+	return repo, timetableRepo, db
 }
 
 func readFixture(t *testing.T, name string) string {
