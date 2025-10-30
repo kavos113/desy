@@ -7,7 +7,8 @@ import {
   gradeLabelToLevel,
   parseKeywordInput,
   parseYearLabel,
-  periodToNumber
+  periodToNumber,
+  quarterToSemester,
 } from '../../constants';
 import type { SearchConditionKey, SearchState, SearchTimetableSelection } from './types';
 import { SearchLectures } from '../../../wailsjs/go/main/App';
@@ -37,7 +38,6 @@ const buildSearchQuery = (state: SearchState) => {
   const title = state.title[0] ?? '';
   const teacherName = state.lecturer[0] ?? '';
   const room = state.room[0] ?? '';
-  const keywords = parseKeywordInput(state.title.join(' '));
   const levels = state.grade
     .map(gradeLabelToLevel)
     .filter((value): value is number => typeof value === 'number');
@@ -52,14 +52,19 @@ const buildSearchQuery = (state: SearchState) => {
       Period: periodToNumber(item.period)
     })
   );
+  const semesters = state.quarter
+    .map((label) => {
+      return quarterToSemester(label);
+    })
 
   return domain.SearchQuery.createFrom({
     Title: title,
-    Keywords: keywords,
+    Keywords: [],
     Departments: state.department,
     Year: yearValue,
     TeacherName: teacherName,
-  Room: room,
+    Room: room,
+    Semester: semesters,
     TimeTables: timetables,
     Levels: levels,
     FilterNotResearch: state.filterNotResearch

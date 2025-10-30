@@ -118,8 +118,6 @@ const CourseDetail = ({
     }
   };
 
-  console.log(lecture);
-
   if (!lecture) {
     return (
       <div className="course-detail-wrapper">

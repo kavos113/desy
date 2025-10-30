@@ -317,6 +317,10 @@ const QUARTER_TO_SEMESTER: Record<string, string> = {
   '4Q': 'winter'
 };
 
+export function quarterToSemester(quarter: string): string | undefined {
+  return QUARTER_TO_SEMESTER[quarter];
+}
+
 export function quarterToSemesters(quarter: string): string[] {
   const semester = QUARTER_TO_SEMESTER[quarter];
   return semester ? [semester] : [];
