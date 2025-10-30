@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -18,10 +19,11 @@ import (
 
 // App struct
 type App struct {
-	ctx            context.Context
-	db             *sql.DB
-	lectureUsecase usecase.LectureUsecase
-	scraperUsecase usecase.ScraperUsecase
+	ctx              context.Context
+	db               *sql.DB
+	lectureUsecase   usecase.LectureUsecase
+	scraperUsecase   usecase.ScraperUsecase
+	timetableUsecase usecase.TimeTableUsecase
 }
 
 // NewApp creates a new App application struct
@@ -45,9 +47,10 @@ func NewApp() *App {
 	scraperUsecase := usecase.NewScraperUsecase(fetcher, lectureRepo, timetableRepo, scraper.NewParser(), 3*time.Second)
 
 	return &App{
-		db:             db,
-		lectureUsecase: usecase.NewLectureUsecase(lectureRepo),
-		scraperUsecase: scraperUsecase,
+		db:               db,
+		lectureUsecase:   usecase.NewLectureUsecase(lectureRepo),
+		scraperUsecase:   scraperUsecase,
+		timetableUsecase: usecase.NewTimeTableUsecase(timetableRepo),
 	}
 }
 
@@ -55,6 +58,12 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+
+	if a.timetableUsecase != nil {
+		if _, err := a.timetableUsecase.ExpandTimetableRanges(ctx); err != nil {
+			log.Printf("expand timetable ranges on startup: %v", err)
+		}
+	}
 }
 
 // Greet returns a greeting for the given name
