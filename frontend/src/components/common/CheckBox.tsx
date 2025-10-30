@@ -6,10 +6,17 @@ type CheckBoxProps = {
   content: string;
   onCheckItem?: (index: number, value: boolean) => void;
   onChange?: (value: boolean) => void;
+  checked?: boolean;
 };
 
-const CheckBox = ({ checkboxId, content, onCheckItem, onChange }: CheckBoxProps) => {
-  const [internalChecked, setInternalChecked] = useState(false);
+const CheckBox = ({ checkboxId, content, onCheckItem, onChange, checked }: CheckBoxProps) => {
+  const [internalChecked, setInternalChecked] = useState(checked ?? false);
+
+  useEffect(() => {
+    if (typeof checked === 'boolean') {
+      setInternalChecked(checked);
+    }
+  }, [checked]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextChecked = event.target.checked;

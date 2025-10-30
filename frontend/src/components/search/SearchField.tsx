@@ -8,12 +8,16 @@ type SearchFieldProps = {
   onClickMenuItem?: (key: SearchConditionKey, items: string[]) => void;
   onTimetableChange?: (items: SearchTimetableSelection[]) => void;
   onToggleFilterNotResearch?: (value: boolean) => void;
+  resetSignal?: number;
+  filterNotResearch?: boolean;
 };
 
 const SearchField = ({
   onClickMenuItem,
   onTimetableChange,
-  onToggleFilterNotResearch
+  onToggleFilterNotResearch,
+  resetSignal,
+  filterNotResearch
 }: SearchFieldProps) => {
   const handleSearchBoxChange = useCallback(
     (title: string, lecturer: string, room: string) => {
@@ -43,11 +47,14 @@ const SearchField = ({
       <SearchBoxes
         onClickMenuItem={handleClickMenuItem}
         onChangeSearchBox={handleSearchBoxChange}
+        resetSignal={resetSignal}
       />
       <SearchConditions
         onCheckItem={handleConditionChange}
         onTimetableChange={onTimetableChange}
         onToggleFilterNotResearch={onToggleFilterNotResearch}
+        resetSignal={resetSignal}
+        filterNotResearch={filterNotResearch}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import SimpleButton from '../common/SimpleButton';
 import FetchButton from './FetchButton';
@@ -8,7 +9,7 @@ import {
   parseKeywordInput,
   parseYearLabel,
   periodToNumber,
-  quarterToSemester,
+  quarterToSemester
 } from '../../constants';
 import type { SearchConditionKey, SearchState, SearchTimetableSelection } from './types';
 import { SearchLectures } from '../../../wailsjs/go/main/App';
@@ -21,7 +22,7 @@ type SearchProps = {
   onBack?: () => void;
 };
 
-const INITIAL_STATE: SearchState = {
+const createInitialState = (): SearchState => ({
   university: [],
   department: [],
   year: [],
@@ -32,19 +33,20 @@ const INITIAL_STATE: SearchState = {
   quarter: [],
   timetable: [],
   filterNotResearch: false
-};
+});
 
 const buildSearchQuery = (state: SearchState) => {
   const title = state.title[0] ?? '';
   const teacherName = state.lecturer[0] ?? '';
   const room = state.room[0] ?? '';
+  const keywords = parseKeywordInput(title);
   const levels = state.grade
     .map(gradeLabelToLevel)
     .filter((value): value is number => typeof value === 'number');
   const yearValue =
     state.year
       .map(parseYearLabel)
-      .find((value): value is number => typeof value === 'number' && !Number.isNaN(value)) ?? 0;
+      .find((value): value is number => typeof value === 'number') ?? 0;
 
   const timetables = state.timetable.map((item) =>
     domain.TimeTable.createFrom({
@@ -52,14 +54,14 @@ const buildSearchQuery = (state: SearchState) => {
       Period: periodToNumber(item.period)
     })
   );
+
   const semesters = state.quarter
-    .map((label) => {
-      return quarterToSemester(label);
-    })
+    .map((label) => quarterToSemester(label))
+    .filter((value): value is string => typeof value === 'string');
 
   return domain.SearchQuery.createFrom({
     Title: title,
-    Keywords: [],
+    Keywords: keywords,
     Departments: state.department,
     Year: yearValue,
     TeacherName: teacherName,
@@ -72,8 +74,9 @@ const buildSearchQuery = (state: SearchState) => {
 };
 
 const Search = ({ className, onSearch, onBack }: SearchProps) => {
-  const [condition, setCondition] = useState<SearchState>(INITIAL_STATE);
+  const [condition, setCondition] = useState<SearchState>(() => createInitialState());
   const [isSearching, setIsSearching] = useState(false);
+  const [resetCounter, setResetCounter] = useState(0);
 
   const wrapperClassName = useMemo(() => {
     return ['search-wrapper', className].filter(Boolean).join(' ');
@@ -92,6 +95,9 @@ const Search = ({ className, onSearch, onBack }: SearchProps) => {
   }, []);
 
   const handleSearch = useCallback(async () => {
+    if (isSearching) {
+      return;
+    }
     setIsSearching(true);
     try {
       const query = buildSearchQuery(condition);
@@ -103,18 +109,34 @@ const Search = ({ className, onSearch, onBack }: SearchProps) => {
     } finally {
       setIsSearching(false);
     }
-  }, [condition, onBack, onSearch]);
+  }, [condition, isSearching, onBack, onSearch]);
 
   const handleBack = useCallback(() => {
     onBack?.();
   }, [onBack]);
+
+  const handleReset = useCallback(() => {
+    setCondition(createInitialState());
+    setResetCounter((previous) => previous + 1);
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== 'Enter' || event.isDefaultPrevented()) {
+        return;
+      }
+      event.preventDefault();
+      handleSearch();
+    },
+    [handleSearch]
+  );
 
   const selectedUniversity = useMemo(() => condition.university.join(', '), [condition.university]);
   const selectedDepartment = useMemo(() => condition.department.join(', '), [condition.department]);
   const selectedYear = useMemo(() => condition.year.join(', '), [condition.year]);
 
   return (
-    <div className={wrapperClassName}>
+    <div className={wrapperClassName} onKeyDown={handleKeyDown}>
       <div className="fetch">
         <FetchButton />
       </div>
@@ -122,14 +144,24 @@ const Search = ({ className, onSearch, onBack }: SearchProps) => {
         onClickMenuItem={handleConditionChange}
         onTimetableChange={handleTimetableChange}
         onToggleFilterNotResearch={handleFilterNotResearchChange}
+        resetSignal={resetCounter}
+        filterNotResearch={condition.filterNotResearch}
       />
       <div>
-        <SimpleButton
-          text="Search"
-          className="button"
-          onClick={handleSearch}
-          disabled={isSearching}
-        />
+        <div className="search-actions">
+          <SimpleButton
+            text="Search"
+            className="button"
+            onClick={handleSearch}
+            disabled={isSearching}
+          />
+          <SimpleButton
+            text="リセット"
+            className="button"
+            onClick={handleReset}
+            disabled={isSearching}
+          />
+        </div>
         <p>大学: {selectedUniversity}</p>
         <p>開講: {selectedDepartment}</p>
         <p>年度: {selectedYear}</p>

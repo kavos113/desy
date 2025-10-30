@@ -56,4 +56,52 @@ describe('Search', () => {
     const [[query]] = searchLecturesMock.mock.calls;
     expect(query.Room ?? '').toBe('本館');
   });
+
+  it('リセットボタンで検索条件を初期化できる', async () => {
+    const user = userEvent.setup();
+    render(<Search />);
+
+    const titleInput = screen.getByPlaceholderText('講義名');
+    const gradeCheckBox = screen.getByLabelText('学士1年');
+    const researchCheckBox = screen.getByLabelText('研究系科目を除外');
+
+    await act(async () => {
+      await user.type(titleInput, '線形代数');
+      await user.click(gradeCheckBox);
+      await user.click(researchCheckBox);
+    });
+
+    expect(titleInput).toHaveValue('線形代数');
+    expect(gradeCheckBox).toBeChecked();
+    expect(researchCheckBox).toBeChecked();
+
+    const resetButton = screen.getByRole('button', { name: 'リセット' });
+    await act(async () => {
+      await user.click(resetButton);
+    });
+
+    await waitFor(() => {
+      expect(titleInput).toHaveValue('');
+      expect(gradeCheckBox).not.toBeChecked();
+      expect(researchCheckBox).not.toBeChecked();
+    });
+  });
+
+  it('Enterキーで検索を実行できる', async () => {
+    const user = userEvent.setup();
+    render(<Search />);
+
+    const titleInput = screen.getByPlaceholderText('講義名');
+
+    await act(async () => {
+      await user.type(titleInput, '線形代数{Enter}');
+    });
+
+    await waitFor(() => {
+      expect(searchLecturesMock).toHaveBeenCalledTimes(1);
+    });
+
+    const [[query]] = searchLecturesMock.mock.calls;
+    expect(query.Keywords ?? []).toContain('線形代数');
+  });
 });

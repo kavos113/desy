@@ -7,6 +7,7 @@ type TimetableState = Record<Day, Record<Period, boolean>>;
 
 type TimetableProps = {
   onCheckItem?: (items: SearchTimetableSelection[]) => void;
+  resetSignal?: number;
 };
 
 const createInitialState = (): TimetableState => {
@@ -22,7 +23,7 @@ const createInitialState = (): TimetableState => {
   }, {} as TimetableState);
 };
 
-const Timetable = ({ onCheckItem }: TimetableProps) => {
+const Timetable = ({ onCheckItem, resetSignal }: TimetableProps) => {
   const [checked, setChecked] = useState<TimetableState>(() => createInitialState());
 
   useEffect(() => {
@@ -36,6 +37,13 @@ const Timetable = ({ onCheckItem }: TimetableProps) => {
     }
     onCheckItem?.(selected);
   }, [checked, onCheckItem]);
+
+  useEffect(() => {
+    if (resetSignal === undefined) {
+      return;
+    }
+    setChecked(createInitialState());
+  }, [resetSignal]);
 
   const toggleCell = (day: Day, period: Period) => {
     setChecked((previous) => {
