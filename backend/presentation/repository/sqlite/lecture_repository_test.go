@@ -245,6 +245,78 @@ func TestLectureRepositorySearchAppliesFilters(t *testing.T) {
 	}
 }
 
+func TestLectureRepositorySearchPartialMatchJapaneseTitle(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		1,
+		"テスト大学",
+		"機械学習基礎",
+		"情報科学",
+		"CS-JP-01",
+		2025,
+	)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		2,
+		"テスト大学",
+		"データサイエンス演習",
+		"情報科学",
+		"CS-JP-02",
+		2025,
+	)
+
+	results, err := repo.Search(domain.SearchQuery{Title: "機械"})
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result for partial Japanese title match, got %d", len(results))
+	}
+	if results[0].Title != "機械学習基礎" {
+		t.Fatalf("unexpected title: %s", results[0].Title)
+	}
+}
+
+func TestLectureRepositorySearchPartialMatchJapaneseTeacherName(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		1,
+		"テスト大学",
+		"人工知能概論",
+		"情報科学",
+		"CS-JP-11",
+		2025,
+	)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		2,
+		"テスト大学",
+		"統計解析入門",
+		"情報科学",
+		"CS-JP-12",
+		2025,
+	)
+
+	mustExec(t, db, `INSERT INTO teachers (id, name) VALUES (?, ?)`, 1, "山田太郎")
+	mustExec(t, db, `INSERT INTO teachers (id, name) VALUES (?, ?)`, 2, "佐藤花子")
+
+	mustExec(t, db, `INSERT INTO lecture_teachers (lecture_id, teacher_id) VALUES (?, ?)`, 1, 1)
+	mustExec(t, db, `INSERT INTO lecture_teachers (lecture_id, teacher_id) VALUES (?, ?)`, 2, 2)
+
+	results, err := repo.Search(domain.SearchQuery{TeacherName: "山田"})
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result for partial Japanese teacher match, got %d", len(results))
+	}
+	if results[0].Title != "人工知能概論" {
+		t.Fatalf("unexpected title for matched lecture: %s", results[0].Title)
+	}
+}
+
 func TestLectureRepositorySearchReturnsEmptyWhenNoMatches(t *testing.T) {
 	repo, _ := newTestRepository(t)
 	result, err := repo.Search(domain.SearchQuery{Title: "non-existent"})

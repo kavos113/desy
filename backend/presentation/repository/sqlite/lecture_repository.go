@@ -297,8 +297,8 @@ func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSu
 
 	if query.TeacherName != "" {
 		joins = append(joins, "JOIN lecture_teachers lt ON lt.lecture_id = l.id JOIN teachers t ON t.id = lt.teacher_id")
-		conditions = append(conditions, "LOWER(t.name) LIKE ?")
-		args = append(args, "%"+strings.ToLower(query.TeacherName)+"%")
+		conditions = append(conditions, "t.name LIKE ?")
+		args = append(args, "%"+query.TeacherName+"%")
 	}
 
 	if len(query.Keywords) > 0 {
@@ -326,8 +326,8 @@ func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSu
 	}
 
 	if query.Title != "" {
-		conditions = append(conditions, "(LOWER(l.title) LIKE ? OR LOWER(IFNULL(l.english_title, '')) LIKE ?)")
-		like := "%" + strings.ToLower(query.Title) + "%"
+		conditions = append(conditions, "(l.title LIKE ? OR IFNULL(l.english_title, '') LIKE ?)")
+		like := "%" + query.Title + "%"
 		args = append(args, like, like)
 	}
 
