@@ -53,19 +53,20 @@
 }
 
 .combobox-box-container {
-  width: 270px;
+  width: 240px;
   height: 28px;
   flex-shrink: 0;
   border-radius: 12px;
   background: var(--white);
   position: relative;
+  z-index: 10;
 }
 
 .comboMenu {
   position: absolute;
   top: 0;
   left: 0;
-  width: 270px;
+  width: 240px;
   border-radius: 12px;
   background: var(--white);
 }

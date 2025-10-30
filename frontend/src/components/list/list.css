@@ -1,8 +1,13 @@
+.list-wrapper {
+  box-shadow: 10px 0 15px rgba(0, 0, 0, 0.1);
+}
+
 .list-table {
   overflow-y: auto;
   height: 100%;
   flex: 1 1 auto;
   min-height: 0;
+  background-color: var(--white);
 }
 
 .list-item {
@@ -29,9 +34,15 @@
   overflow: hidden;
 }
 
+.header {
+  position: sticky;
+  top: 0;
+  background-color: var(--white);
+}
+
 .header .item {
   border-top: 1px solid var(--ablack);
-  border-bottom: none;
+  border-bottom: 2px solid var(--ablack);
   height: 32px;
 }
 

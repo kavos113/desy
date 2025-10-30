@@ -145,8 +145,8 @@ const ListTable = ({ items, onSort, className }: ListTableProps) => {
     [handleListItemClick]
   );
 
-  const tableClassName = useMemo(() => {
-    return ["list-table", className].filter(Boolean).join(" ");
+  const wrapperClassName = useMemo(() => {
+    return ["list-wrapper", className].filter(Boolean).join(" ");
   }, [className]);
 
   const detailPanelClassName = useMemo(() => {
@@ -237,26 +237,28 @@ const ListTable = ({ items, onSort, className }: ListTableProps) => {
   }, [items, lectureCache, selectedLecture]);
 
   return (
-    <div className={tableClassName}>
-      <ListHeaderItem onSort={handleSort} />
-      {items.length === 0 ? (
-        <p>講義が見つかりませんでした。</p>
-      ) : (
-        items.map((item) => (
-          <ListItem key={item.ID} item={item} onClick={handleListItemClick} />
-        ))
-      )}
+    <div className={wrapperClassName}>
+      <div className="list-table">
+        <ListHeaderItem onSort={handleSort} />
+        {items.length === 0 ? (
+          <p>講義が見つかりませんでした。</p>
+        ) : (
+          items.map((item) => (
+            <ListItem key={item.ID} item={item} onClick={handleListItemClick} />
+          ))
+        )}
 
-      <div className={detailPanelClassName}>
-        {isLoadingDetail && <p className="course-detail-text">読み込み中...</p>}
-        <CourseDetail
-          lecture={selectedLecture}
-          relatedCourses={relatedCourseEntries}
-          onSelectRelatedCourse={handleRelatedCourseClick}
-        />
+        <div className={detailPanelClassName}>
+          {isLoadingDetail && <p className="course-detail-text">読み込み中...</p>}
+          <CourseDetail
+            lecture={selectedLecture}
+            relatedCourses={relatedCourseEntries}
+            onSelectRelatedCourse={handleRelatedCourseClick}
+          />
+        </div>
+        <SimpleButton text="戻る" className={backButtonClassName} onClick={closeDetail} />
+        <div className={overlayClassName} onClick={closeDetail}></div>
       </div>
-      <SimpleButton text="戻る" className={backButtonClassName} onClick={closeDetail} />
-      <div className={overlayClassName} onClick={closeDetail}></div>
     </div>
   );
 };
