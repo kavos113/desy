@@ -317,6 +317,67 @@ func TestLectureRepositorySearchPartialMatchJapaneseTeacherName(t *testing.T) {
 	}
 }
 
+func TestLectureRepositorySearchFiltersByRoom(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		1,
+		"テスト大学",
+		"線形代数",
+		"理工学部",
+		"MA-001",
+		2025,
+	)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, year) VALUES (?, ?, ?, ?, ?, ?)`,
+		2,
+		"テスト大学",
+		"物理学実験",
+		"理工学部",
+		"PH-101",
+		2025,
+	)
+
+	mustExec(t, db, `INSERT INTO rooms (id, name) VALUES (?, ?)`, 10, "本館101教室")
+	mustExec(t, db, `INSERT INTO rooms (id, name) VALUES (?, ?)`, 11, "別館202ラボ")
+
+	mustExec(t, db, `INSERT INTO timetables (lecture_id, room_id, day_of_week, period) VALUES (?, ?, ?, ?)`,
+		1,
+		10,
+		string(domain.DayOfWeekMonday),
+		int(domain.Period1),
+	)
+
+	mustExec(t, db, `INSERT INTO timetables (lecture_id, room_id, day_of_week, period) VALUES (?, ?, ?, ?)`,
+		2,
+		11,
+		string(domain.DayOfWeekTuesday),
+		int(domain.Period2),
+	)
+
+	results, err := repo.Search(domain.SearchQuery{Room: "101"})
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result for room match, got %d", len(results))
+	}
+	if results[0].Title != "線形代数" {
+		t.Fatalf("unexpected lecture matched for room: %s", results[0].Title)
+	}
+
+	other, err := repo.Search(domain.SearchQuery{Room: "別館"})
+	if err != nil {
+		t.Fatalf("Search returned error for second query: %v", err)
+	}
+	if len(other) != 1 {
+		t.Fatalf("expected 1 result for second room match, got %d", len(other))
+	}
+	if other[0].Title != "物理学実験" {
+		t.Fatalf("unexpected lecture matched for second room: %s", other[0].Title)
+	}
+}
+
 func TestLectureRepositorySearchReturnsEmptyWhenNoMatches(t *testing.T) {
 	repo, _ := newTestRepository(t)
 	result, err := repo.Search(domain.SearchQuery{Title: "non-existent"})

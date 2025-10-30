@@ -310,8 +310,11 @@ func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSu
 		}
 	}
 
-	if len(query.TimeTables) > 0 {
+	if len(query.TimeTables) > 0 || query.Room != "" {
 		joins = append(joins, "JOIN timetables tt ON tt.lecture_id = l.id")
+	}
+
+	if len(query.TimeTables) > 0 {
 		var timetableFilters []string
 		for _, timetable := range query.TimeTables {
 			if timetable.DayOfWeek == "" && timetable.Period == 0 {
@@ -323,6 +326,12 @@ func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSu
 		if len(timetableFilters) > 0 {
 			conditions = append(conditions, "("+strings.Join(timetableFilters, " OR ")+")")
 		}
+	}
+
+	if query.Room != "" {
+		joins = append(joins, "JOIN rooms r ON r.id = tt.room_id")
+		conditions = append(conditions, "r.name LIKE ?")
+		args = append(args, "%"+query.Room+"%")
 	}
 
 	if query.Title != "" {
