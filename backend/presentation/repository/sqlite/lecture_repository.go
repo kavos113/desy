@@ -396,6 +396,9 @@ func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSu
 	}
 
 	if len(ids) == 0 {
+		if query.FilterNotResearch {
+			return filterNotResearch(&summaries), nil
+		}
 		return summaries, nil
 	}
 
@@ -416,6 +419,10 @@ func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSu
 		if ts, ok := teachers[summaries[index].ID]; ok {
 			summaries[index].Teachers = ts
 		}
+	}
+
+	if query.FilterNotResearch {
+		return filterNotResearch(&summaries), nil
 	}
 
 	return summaries, nil
@@ -1356,4 +1363,48 @@ func placeholders(count int) string {
 	}
 
 	return builder.String()
+}
+
+var researchWords = []string{
+	"特定課題プロジェクト",
+	"特定課題研究",
+	"講究",
+	"B2D",
+	"リカレント研修",
+	"オフキャンパスプロジェクト",
+	"国際派遣プロジェクト",
+	"インターンシップ",
+	"学外研修",
+	"論文研究計画論",
+}
+
+var researchTeacherWords = []string{
+	"教員",
+}
+
+func filterNotResearch(lectures *[]domain.LectureSummary) []domain.LectureSummary {
+	result := make([]domain.LectureSummary, 0, len(*lectures))
+	for _, lecture := range *lectures {
+		if checkIsResearchLecture(lecture.Title, lecture.Teachers) {
+			continue
+		}
+		result = append(result, lecture)
+	}
+	return result
+}
+
+func checkIsResearchLecture(title string, teachers []domain.Teacher) bool {
+	for _, word := range researchWords {
+		if strings.Contains(title, word) {
+			return true
+		}
+	}
+	for _, teacher := range teachers {
+		for _, word := range researchTeacherWords {
+			if strings.Contains(teacher.Name, word) {
+				return true
+			}
+		}
+	}
+	return false
 }

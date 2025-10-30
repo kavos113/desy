@@ -19,4 +19,5 @@ export interface SearchState {
   grade: string[];
   quarter: string[];
   timetable: SearchTimetableSelection[];
+  filterNotResearch: boolean;
 }

@@ -7,9 +7,14 @@ import './search.css';
 type SearchFieldProps = {
   onClickMenuItem?: (key: SearchConditionKey, items: string[]) => void;
   onTimetableChange?: (items: SearchTimetableSelection[]) => void;
+  onToggleFilterNotResearch?: (value: boolean) => void;
 };
 
-const SearchField = ({ onClickMenuItem, onTimetableChange }: SearchFieldProps) => {
+const SearchField = ({
+  onClickMenuItem,
+  onTimetableChange,
+  onToggleFilterNotResearch
+}: SearchFieldProps) => {
   const handleSearchBoxChange = useCallback(
     (title: string, lecturer: string) => {
       onClickMenuItem?.('title', title ? [title] : []);
@@ -38,7 +43,11 @@ const SearchField = ({ onClickMenuItem, onTimetableChange }: SearchFieldProps) =
         onClickMenuItem={handleClickMenuItem}
         onChangeSearchBox={handleSearchBoxChange}
       />
-      <SearchConditions onCheckItem={handleConditionChange} onTimetableChange={onTimetableChange} />
+      <SearchConditions
+        onCheckItem={handleConditionChange}
+        onTimetableChange={onTimetableChange}
+        onToggleFilterNotResearch={onToggleFilterNotResearch}
+      />
     </div>
   );
 };

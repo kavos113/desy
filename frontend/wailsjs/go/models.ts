@@ -235,6 +235,7 @@ export namespace domain {
 	    TeacherName: string;
 	    TimeTables: TimeTable[];
 	    Levels: number[];
+	    FilterNotResearch: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new SearchQuery(source);
@@ -249,6 +250,7 @@ export namespace domain {
 	        this.TeacherName = source["TeacherName"];
 	        this.TimeTables = this.convertValues(source["TimeTables"], TimeTable);
 	        this.Levels = source["Levels"];
+	        this.FilterNotResearch = source["FilterNotResearch"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

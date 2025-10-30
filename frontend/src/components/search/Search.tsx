@@ -28,7 +28,8 @@ const INITIAL_STATE: SearchState = {
   lecturer: [],
   grade: [],
   quarter: [],
-  timetable: []
+  timetable: [],
+  filterNotResearch: false
 };
 
 const buildSearchQuery = (state: SearchState) => {
@@ -57,7 +58,8 @@ const buildSearchQuery = (state: SearchState) => {
     Year: yearValue,
     TeacherName: teacherName,
     TimeTables: timetables,
-    Levels: levels
+    Levels: levels,
+    FilterNotResearch: state.filterNotResearch
   });
 };
 
@@ -75,6 +77,10 @@ const Search = ({ className, onSearch, onBack }: SearchProps) => {
 
   const handleTimetableChange = useCallback((items: SearchTimetableSelection[]) => {
     setCondition((previous) => ({ ...previous, timetable: items }));
+  }, []);
+
+  const handleFilterNotResearchChange = useCallback((value: boolean) => {
+    setCondition((previous) => ({ ...previous, filterNotResearch: value }));
   }, []);
 
   const handleSearch = useCallback(async () => {
@@ -107,6 +113,7 @@ const Search = ({ className, onSearch, onBack }: SearchProps) => {
       <SearchField
         onClickMenuItem={handleConditionChange}
         onTimetableChange={handleTimetableChange}
+        onToggleFilterNotResearch={handleFilterNotResearchChange}
       />
       <div>
         <SimpleButton

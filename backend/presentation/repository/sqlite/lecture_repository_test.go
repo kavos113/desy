@@ -256,6 +256,49 @@ func TestLectureRepositorySearchReturnsEmptyWhenNoMatches(t *testing.T) {
 	}
 }
 
+func TestLectureRepositorySearchFilterNotResearch(t *testing.T) {
+	repo, db := newTestRepository(t)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, level, year) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		1,
+		"Test University",
+		"Algorithms",
+		"Computer Science",
+		"CS101",
+		int(domain.LevelBachelor1),
+		2025,
+	)
+
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, level, year) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		2,
+		"Test University",
+		"特定課題研究プロジェクト",
+		"Computer Science",
+		"CS102",
+		int(domain.LevelBachelor1),
+		2025,
+	)
+
+	allLectures, err := repo.Search(domain.SearchQuery{})
+	if err != nil {
+		t.Fatalf("Search without filter returned error: %v", err)
+	}
+	if len(allLectures) != 2 {
+		t.Fatalf("expected 2 lectures without filter, got %d", len(allLectures))
+	}
+
+	filtered, err := repo.Search(domain.SearchQuery{FilterNotResearch: true})
+	if err != nil {
+		t.Fatalf("Search with filter returned error: %v", err)
+	}
+	if len(filtered) != 1 {
+		t.Fatalf("expected 1 lecture after filtering, got %d", len(filtered))
+	}
+	if filtered[0].Title == "特定課題研究プロジェクト" {
+		t.Fatalf("expected research lecture to be filtered out: %#v", filtered[0])
+	}
+}
+
 func TestLectureRepositoryCreatePersistsAggregate(t *testing.T) {
 	repo, _ := newTestRepository(t)
 	lecture := parseDetailFixture(t, "course_detail.html")

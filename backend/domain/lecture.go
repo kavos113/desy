@@ -100,13 +100,14 @@ type LecturePlan struct {
 }
 
 type SearchQuery struct {
-	Title       string
-	Keywords    []string
-	Departments []string
-	Year        int
-	TeacherName string
-	TimeTables  []TimeTable
-	Levels      []Level
+	Title             string
+	Keywords          []string
+	Departments       []string
+	Year              int
+	TeacherName       string
+	TimeTables        []TimeTable
+	Levels            []Level
+	FilterNotResearch bool
 }
 
 type LectureRepository interface {
