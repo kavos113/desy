@@ -12,6 +12,18 @@ describe("formatTimetables", () => {
     expect(result).toBe("月1-3(W1)");
   });
 
+  it("オプションで教室表示を省略できる", () => {
+    const result = formatTimetables(
+      [
+        { DayOfWeek: "friday", Period: 5, Room: { Name: "M110" } } as any,
+        { DayOfWeek: "friday", Period: 6, Room: { Name: "M110" } } as any,
+      ],
+      { includeRoom: false }
+    );
+
+    expect(result).toBe("金5-6");
+  });
+
   it("同じ曜日でも教室が異なる場合は別々に表示する", () => {
     const result = formatTimetables([
       { DayOfWeek: "tuesday", Period: 3, Room: { Name: "W1" } } as any,

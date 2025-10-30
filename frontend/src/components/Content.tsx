@@ -38,7 +38,11 @@ const buildComparators = (): Record<SortKey, Comparator> => ({
   department: (left, right, ascending) =>
     compareText(left.Department ?? "", right.Department ?? "", ascending),
   timetable: (left, right, ascending) =>
-    compareText(formatTimetables(left.Timetables), formatTimetables(right.Timetables), ascending),
+    compareText(
+      formatTimetables(left.Timetables, { includeRoom: false }),
+      formatTimetables(right.Timetables, { includeRoom: false }),
+      ascending
+    ),
 });
 
 const Content = () => {

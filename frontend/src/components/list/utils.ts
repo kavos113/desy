@@ -49,12 +49,14 @@ export function formatTeachers(teachers: domain.Teacher[] | undefined): string {
 }
 
 export function formatTimetables(
-  timetables: domain.TimeTable[] | undefined
+  timetables: domain.TimeTable[] | undefined,
+  options?: { includeRoom?: boolean }
 ): string {
   if (!timetables || timetables.length === 0) {
     return "";
   }
 
+  const includeRoom = options?.includeRoom ?? true;
   const groups = new Map<string, TimeTableGroup>();
   const fallbacks: string[] = [];
 
@@ -73,7 +75,8 @@ export function formatTimetables(
     const fallback = buildFallbackLabel(
       dayLabel,
       timetable.Period,
-      timetable.Room?.Name
+      timetable.Room?.Name,
+      includeRoom
     );
 
     if (!dayLabel || !hasPeriod) {
@@ -121,7 +124,8 @@ export function formatTimetables(
     .forEach((group) => {
       const periods = Array.from(group.periods).sort((a, b) => a - b);
       const ranges = compressPeriods(periods);
-      const roomSuffix = group.roomLabel ? `(${group.roomLabel})` : "";
+      const roomSuffix =
+        includeRoom && group.roomLabel ? `(${group.roomLabel})` : "";
 
       ranges.forEach((range) => {
         const periodLabel =
@@ -199,14 +203,15 @@ function compressPeriods(periods: number[]): PeriodRange[] {
 function buildFallbackLabel(
   dayLabel: string,
   period: number | undefined,
-  roomName: string | undefined
+  roomName: string | undefined,
+  includeRoom: boolean
 ): string {
   const dayPart = dayLabel ?? "";
   const periodPart =
     Number.isFinite(Number(period)) && Number(period) > 0
       ? `${Number(period)}`
       : "";
-  const roomPart = roomName ? `(${roomName})` : "";
+  const roomPart = includeRoom && roomName ? `(${roomName})` : "";
 
   if (!dayPart && !periodPart && !roomPart) {
     return "";

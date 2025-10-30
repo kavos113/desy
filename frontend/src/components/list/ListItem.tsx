@@ -17,7 +17,10 @@ const ListItem = ({ item, onClick, className, credit }: ListItemProps) => {
   };
 
   const teacherText = useMemo(() => formatTeachers(item.Teachers), [item.Teachers]);
-  const timetableText = useMemo(() => formatTimetables(item.Timetables), [item.Timetables]);
+  const timetableText = useMemo(
+    () => formatTimetables(item.Timetables, { includeRoom: false }),
+    [item.Timetables]
+  );
   const semesterText = useMemo(() => formatSemesters(item.Timetables), [item.Timetables]);
   const creditText = credit !== undefined && credit !== null ? String(credit) : "--";
 
