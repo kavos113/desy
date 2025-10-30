@@ -7,7 +7,7 @@
   height: 100%;
   flex: 1 1 auto;
   min-height: 0;
-  background-color: var(--white);
+  background-color: var(--grayborder);
 }
 
 .list-item {
@@ -37,7 +37,7 @@
 .header {
   position: sticky;
   top: 0;
-  background-color: var(--white);
+  background-color: var(--grayborder);
 }
 
 .header .item {
@@ -186,7 +186,7 @@
 }
 
 .overlay.active {
-  z-index: 1;
+  z-index: 12;
   opacity: 1;
 }
 

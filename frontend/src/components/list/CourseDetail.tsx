@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { domain } from "../../../wailsjs/go/models";
 import { formatSemesters, formatTeachers, formatTimetables, splitIntoLines } from "./utils";
 import "./list.css";
+import { render } from "@testing-library/react";
 
 type CourseDetailProps = {
   lecture?: domain.Lecture | null;
@@ -99,6 +100,21 @@ const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: C
       </ul>
     );
   };
+
+  const renderSection = (content: string, header: string) => {
+    if (content != "") {
+      return (
+        <div className="course-detail-section">
+          <h3>{header}</h3>
+          {renderParagraphs(content)}
+        </div>
+      )
+    } else {
+      return null;
+    }
+  }
+
+  console.log(lecture);
 
   if (!lecture) {
     return (
@@ -222,46 +238,20 @@ const CourseDetail = ({ lecture, relatedCourses = [], onSelectRelatedCourse }: C
         <h3>参考書・講義資料等</h3>
         <ul className="course-detail-reference">{renderList(lecture.ReferenceBook)}</ul>
       </div>
-
-      <div className="course-detail-section">
-        <h3>授業の進め方</h3>
-        {renderParagraphs(lecture.Flow)}
-      </div>
-
-      <div className="course-detail-section">
-        <h3>授業時間外学修（予習・復習等）</h3>
-        {renderParagraphs(lecture.OutOfClassWork)}
-      </div>
-
-      <div className="course-detail-section">
-        <h3>成績評価の基準及び方法</h3>
-        {renderParagraphs(lecture.Assessment)}
-      </div>
+      
+      {renderSection(lecture.Flow, "授業の進め方")}
+      {renderSection(lecture.OutOfClassWork, "授業時間外学修（予習・復習等）")}
+      {renderSection(lecture.Assessment, "成績評価の基準及び方法")}
 
       <div className="course-detail-section">
         <h3>関連する科目</h3>
         {renderRelatedCourses()}
       </div>
 
-      <div className="course-detail-section">
-        <h3>履修の条件</h3>
-        {renderParagraphs(lecture.Prerequisite)}
-      </div>
-
-      <div className="course-detail-section">
-        <h3>その他</h3>
-        {renderParagraphs(lecture.Note)}
-      </div>
-
-      <div className="course-detail-section">
-        <h3>連絡先</h3>
-        {renderParagraphs(lecture.Contact)}
-      </div>
-
-      <div className="course-detail-section">
-        <h3>オフィスアワー</h3>
-        {renderParagraphs(lecture.OfficeHours)}
-      </div>
+      {renderSection(lecture.Prerequisite, "履修の条件")}
+      {renderSection(lecture.Note, "その他")}
+      {renderSection(lecture.Contact, "連絡先")}
+      {renderSection(lecture.OfficeHours, "オフィスアワー")}
     </div>
   );
 };
