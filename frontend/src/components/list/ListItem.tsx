@@ -7,10 +7,9 @@ type ListItemProps = {
   item: domain.LectureSummary;
   onClick?: (id: number) => void;
   className?: string;
-  credit?: number | null;
 };
 
-const ListItem = ({ item, onClick, className, credit }: ListItemProps) => {
+const ListItem = ({ item, onClick, className }: ListItemProps) => {
   const handleClick: MouseEventHandler<HTMLDivElement> = (event) => {
     onClick?.(item.ID);
     event.stopPropagation();
@@ -22,7 +21,7 @@ const ListItem = ({ item, onClick, className, credit }: ListItemProps) => {
     [item.Timetables]
   );
   const semesterText = useMemo(() => formatSemesters(item.Timetables), [item.Timetables]);
-  const creditText = credit !== undefined && credit !== null ? String(credit) : "--";
+  const creditText = item.Credit !== undefined && item.Credit !== null ? String(item.Credit) : "--";
 
   const containerClassName = useMemo(() => {
     const classList = ["item-wrapper", "list-item"];

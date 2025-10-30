@@ -228,6 +228,9 @@ func TestLectureRepositorySearchAppliesFilters(t *testing.T) {
 	if summary.Level != domain.LevelBachelor1 {
 		t.Fatalf("unexpected level: %d", summary.Level)
 	}
+	if summary.Credit != 2 {
+		t.Fatalf("unexpected credit: %d", summary.Credit)
+	}
 	if summary.Year != 2025 {
 		t.Fatalf("unexpected year: %d", summary.Year)
 	}
@@ -474,7 +477,7 @@ func seedLectureAggregate(t *testing.T, db *sql.DB) {
 func seedSearchData(t *testing.T, db *sql.DB) {
 	t.Helper()
 
-	mustExec(t, db, `INSERT INTO lectures (id, university, title, english_title, department, code, level, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, english_title, department, code, level, credit, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		1,
 		"Test University",
 		"Data Science Basics",
@@ -482,16 +485,18 @@ func seedSearchData(t *testing.T, db *sql.DB) {
 		"Computer Science",
 		"CS100",
 		int(domain.LevelBachelor1),
+		2,
 		2025,
 	)
 
-	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, level, year) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	mustExec(t, db, `INSERT INTO lectures (id, university, title, department, code, level, credit, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		2,
 		"Test University",
 		"Quantum Mechanics",
 		"Physics",
 		"PH200",
 		int(domain.LevelBachelor2),
+		4,
 		2024,
 	)
 

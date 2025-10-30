@@ -185,6 +185,7 @@ export namespace domain {
 	    Department: string;
 	    Code: string;
 	    Level: number;
+	    Credit: number;
 	    Year: number;
 	    Timetables: TimeTable[];
 	    Teachers: Teacher[];
@@ -201,6 +202,7 @@ export namespace domain {
 	        this.Department = source["Department"];
 	        this.Code = source["Code"];
 	        this.Level = source["Level"];
+	        this.Credit = source["Credit"];
 	        this.Year = source["Year"];
 	        this.Timetables = this.convertValues(source["Timetables"], TimeTable);
 	        this.Teachers = this.convertValues(source["Teachers"], Teacher);

@@ -289,7 +289,7 @@ func (r *LectureRepository) FindByCode(code, title, openTerm string) (*domain.Le
 // Search retrieves lecture summaries filtered by the provided query fields.
 func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSummary, error) {
 	selectBuilder := strings.Builder{}
-	selectBuilder.WriteString("SELECT DISTINCT l.id, l.university, l.title, l.department, l.code, l.level, l.year FROM lectures l")
+	selectBuilder.WriteString("SELECT DISTINCT l.id, l.university, l.title, l.department, l.code, l.level, l.credit, l.year FROM lectures l")
 
 	var joins []string
 	var conditions []string
@@ -373,12 +373,15 @@ func (r *LectureRepository) Search(query domain.SearchQuery) ([]domain.LectureSu
 
 	for rows.Next() {
 		var summary domain.LectureSummary
-		var levelValue, yearValue sql.NullInt64
-		if err := rows.Scan(&summary.ID, &summary.University, &summary.Title, &summary.Department, &summary.Code, &levelValue, &yearValue); err != nil {
+		var levelValue, creditValue, yearValue sql.NullInt64
+		if err := rows.Scan(&summary.ID, &summary.University, &summary.Title, &summary.Department, &summary.Code, &levelValue, &creditValue, &yearValue); err != nil {
 			return nil, fmt.Errorf("scan lecture summary: %w", err)
 		}
 		if levelValue.Valid {
 			summary.Level = domain.Level(levelValue.Int64)
+		}
+		if creditValue.Valid {
+			summary.Credit = int(creditValue.Int64)
 		}
 		if yearValue.Valid {
 			summary.Year = int(yearValue.Int64)

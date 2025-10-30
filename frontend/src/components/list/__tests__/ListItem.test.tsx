@@ -13,6 +13,7 @@ describe("ListItem", () => {
       Code: "ABC123",
       Level: 3,
       Year: 2024,
+      Credit: 2,
       Timetables: [
         {
           DayOfWeek: "monday",
@@ -45,6 +46,7 @@ describe("ListItem", () => {
     expect(screen.getByText("アルゴリズム")).toBeInTheDocument();
     expect(screen.getByText("田中太郎")).toBeInTheDocument();
   expect(screen.getByText("月1-2")).toBeInTheDocument();
+  expect(screen.getByText("2")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("アルゴリズム"));
     expect(handleClick).toHaveBeenCalledWith(1);

@@ -47,6 +47,7 @@ type LectureSummary struct {
 	Department string
 	Code       string
 	Level      Level
+	Credit     int
 	Year       int
 	Timetables []TimeTable
 	Teachers   []Teacher
