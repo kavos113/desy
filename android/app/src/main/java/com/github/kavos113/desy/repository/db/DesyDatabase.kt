@@ -14,7 +14,6 @@ import com.github.kavos113.desy.repository.db.entity.RelatedCourseEntity
 import com.github.kavos113.desy.repository.db.entity.RoomEntity
 import com.github.kavos113.desy.repository.db.entity.TeacherEntity
 import com.github.kavos113.desy.repository.db.entity.TimetableEntity
-import java.io.File
 
 @Database(
   entities = [
@@ -35,14 +34,10 @@ abstract class DesyDatabase : RoomDatabase() {
   abstract fun lectureDao(): LectureDao
 
   companion object {
-    /**
-     * デスクトップ版で生成したSQLite DBを配置しておけば、それを読み込みます。
-     * dbFileを指定しない場合はアプリ内の `desy.db` を開きます。
-     */
-    fun open(context: Context, dbFile: File? = null): DesyDatabase {
+    fun open(context: Context, assetName: String? = "dasy_database.db"): DesyDatabase {
       val builder = Room.databaseBuilder(context, DesyDatabase::class.java, "desy.db")
-      if (dbFile != null) {
-        builder.createFromFile(dbFile)
+      if (assetName != null) {
+        builder.createFromAsset(assetName)
       }
       return builder.build()
     }

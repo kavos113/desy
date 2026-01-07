@@ -22,8 +22,8 @@ abstract class AppModule {
       @ApplicationContext context: Context,
     ): DesyDatabase {
       // ここでは内部DB(desy.db)を開く。
-      // デスクトップ版のdbを読みたい場合は createFromFile を使う open の引数を差し替える。
-      return DesyDatabase.open(context, dbFile = null)
+      // 初期データは assets/dasy_database.db を createFromAsset で注入する。
+      return DesyDatabase.open(context)
     }
   }
 
