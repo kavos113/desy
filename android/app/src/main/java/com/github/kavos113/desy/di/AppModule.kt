@@ -21,9 +21,7 @@ abstract class AppModule {
     fun provideDatabase(
       @ApplicationContext context: Context,
     ): DesyDatabase {
-      // ここでは内部DB(desy.db)を開く。
-      // 初期データは assets/dasy_database.db を createFromAsset で注入する。
-      return DesyDatabase.open(context)
+      return DesyDatabase.open(context, null)
     }
   }
 

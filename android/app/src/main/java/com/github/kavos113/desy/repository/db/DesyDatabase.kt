@@ -37,7 +37,9 @@ abstract class DesyDatabase : RoomDatabase() {
     fun open(context: Context, assetName: String? = "dasy_database.db"): DesyDatabase {
       val builder = Room.databaseBuilder(context, DesyDatabase::class.java, "desy.db")
       if (assetName != null) {
-        builder.createFromAsset(assetName)
+        builder
+          .createFromAsset(assetName)
+          .fallbackToDestructiveMigration(false)
       }
       return builder.build()
     }
