@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.kavos113.desy.domain.SearchQuery
+import com.github.kavos113.desy.ui.detail.RelatedCourseEntry
 import com.github.kavos113.desy.usecase.LectureUsecase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -21,6 +22,9 @@ class LectureViewModel @Inject constructor(
 ) : ViewModel() {
 
   var uiState: LectureListUiState by mutableStateOf(LectureListUiState(isLoading = true))
+    private set
+
+  var detailUiState: LectureDetailUiState by mutableStateOf(LectureDetailUiState())
     private set
 
   init {
@@ -40,6 +44,64 @@ class LectureViewModel @Inject constructor(
           items = emptyList(),
           isLoading = false,
           errorMessage = throwable.message ?: "講義一覧の取得に失敗しました。",
+        )
+      }
+    }
+  }
+
+  fun loadLectureDetails(lectureId: Int) {
+    detailUiState = detailUiState.copy(
+      lectureId = lectureId,
+      lecture = null,
+      relatedCourses = emptyList(),
+      isLoading = true,
+      errorMessage = null,
+    )
+
+    viewModelScope.launch {
+      runCatching {
+        lectureUsecase.getLectureDetails(lectureId)
+      }.onSuccess { lecture ->
+        if (lecture == null) {
+          detailUiState = detailUiState.copy(
+            lecture = null,
+            relatedCourses = emptyList(),
+            isLoading = false,
+            errorMessage = "講義が見つかりませんでした。",
+          )
+        } else {
+          val relatedEntries = buildList {
+            lecture.relatedCourseCodes
+              .map { it.trim() }
+              .filter { it.isNotEmpty() }
+              .forEach { code -> add(RelatedCourseEntry(code = code)) }
+
+            lecture.relatedCourses
+              .distinct()
+              .filter { it > 0 }
+              .forEach { relatedId ->
+                val relatedLecture = runCatching {
+                  lectureUsecase.getLectureDetails(relatedId)
+                }.getOrNull()
+
+                val code = relatedLecture?.code?.trim().orEmpty().ifBlank { relatedId.toString() }
+                val title = relatedLecture?.title
+                add(RelatedCourseEntry(code = code, id = relatedId, title = title))
+              }
+          }
+
+          detailUiState = detailUiState.copy(
+            lecture = lecture,
+            relatedCourses = relatedEntries,
+            isLoading = false,
+          )
+        }
+      }.onFailure { throwable ->
+        detailUiState = detailUiState.copy(
+          lecture = null,
+          relatedCourses = emptyList(),
+          isLoading = false,
+          errorMessage = throwable.message ?: "講義詳細の取得に失敗しました。",
         )
       }
     }

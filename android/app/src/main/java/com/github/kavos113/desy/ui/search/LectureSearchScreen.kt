@@ -37,16 +37,17 @@ import com.github.kavos113.desy.ui.theme.DesyTheme
 @Composable
 fun LectureSearchScreen(
   onSearch: (SearchQuery) -> Unit,
+  onCancel: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  LectureSearchScreenContent(onSearch = onSearch, modifier = modifier)
+  LectureSearchScreenContent(onSearch = onSearch, onCancel = onCancel, modifier = modifier)
 }
 
 @Preview(showBackground = true, widthDp = 420)
 @Composable
 private fun LectureSearchScreenPreview() {
   DesyTheme {
-    LectureSearchScreen(onSearch = {})
+    LectureSearchScreen(onSearch = {}, onCancel = {})
   }
 }
 
@@ -54,6 +55,7 @@ private fun LectureSearchScreenPreview() {
 @Composable
 private fun LectureSearchScreenContent(
   onSearch: (SearchQuery) -> Unit,
+  onCancel: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   var title by remember { mutableStateOf("") }
@@ -74,7 +76,13 @@ private fun LectureSearchScreenContent(
       .padding(12.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    Text("検索", style = MaterialTheme.typography.titleLarge)
+    Row(modifier = Modifier.fillMaxWidth()) {
+      Text("検索", style = MaterialTheme.typography.titleLarge)
+      Spacer(modifier = Modifier.weight(1f))
+      TextButton(onClick = onCancel) {
+        Text("戻る")
+      }
+    }
 
     OutlinedTextField(
       value = title,

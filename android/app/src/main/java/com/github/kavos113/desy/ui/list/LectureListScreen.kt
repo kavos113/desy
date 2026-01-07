@@ -1,14 +1,17 @@
 package com.github.kavos113.desy.ui.list
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +29,8 @@ import com.github.kavos113.desy.ui.theme.DesyTheme
 @Composable
 fun LectureListScreen(
   uiState: LectureListUiState,
+  onOpenSearch: () -> Unit,
+  onSelectLecture: (Int) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Column(
@@ -34,6 +39,13 @@ fun LectureListScreen(
       .padding(12.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+      Spacer(modifier = Modifier.weight(1f))
+      Button(onClick = onOpenSearch) {
+        Text("検索")
+      }
+    }
+
     LectureListHeader()
 
     when {
@@ -55,7 +67,7 @@ fun LectureListScreen(
           verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
           items(uiState.items, key = { it.id }) { item ->
-            LectureListRow(item)
+            LectureListRow(item, onClick = { onSelectLecture(item.id) })
           }
         }
       }
@@ -107,7 +119,7 @@ private fun LectureListScreenPreview() {
   )
 
   DesyTheme {
-    LectureListScreen(uiState = sample)
+    LectureListScreen(uiState = sample, onOpenSearch = {}, onSelectLecture = {})
   }
 }
 
@@ -142,7 +154,7 @@ private fun LectureListRowPreview() {
   DesyTheme {
     Column(modifier = Modifier.padding(12.dp)) {
       LectureListHeader()
-      LectureListRow(item)
+      LectureListRow(item, onClick = {})
     }
   }
 }
@@ -153,6 +165,8 @@ private fun LectureListEmptyPreview() {
   DesyTheme {
     LectureListScreen(
       uiState = LectureListUiState(isLoading = false, items = emptyList()),
+      onOpenSearch = {},
+      onSelectLecture = {},
     )
   }
 }
@@ -163,6 +177,8 @@ private fun LectureListLoadingPreview() {
   DesyTheme {
     LectureListScreen(
       uiState = LectureListUiState(isLoading = true),
+      onOpenSearch = {},
+      onSelectLecture = {},
     )
   }
 }
@@ -173,6 +189,8 @@ private fun LectureListErrorPreview() {
   DesyTheme {
     LectureListScreen(
       uiState = LectureListUiState(isLoading = false, errorMessage = "エラーが発生しました"),
+      onOpenSearch = {},
+      onSelectLecture = {},
     )
   }
 }
@@ -193,9 +211,12 @@ private fun LectureListHeader() {
 }
 
 @Composable
-private fun LectureListRow(item: LectureSummary) {
+private fun LectureListRow(item: LectureSummary, onClick: () -> Unit) {
   Row(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = Modifier
+      .fillMaxWidth()
+      .clickable(onClick = onClick)
+      .padding(vertical = 6.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
   ) {
     BodyCell(item.title, weight = 0.42f)
