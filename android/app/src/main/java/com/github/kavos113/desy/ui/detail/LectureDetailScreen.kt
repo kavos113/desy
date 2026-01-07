@@ -1,29 +1,27 @@
 package com.github.kavos113.desy.ui.detail
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -91,8 +89,6 @@ fun LectureDetailScreen(
           item {
             LectureMetaSection(lecture = uiState.lecture)
           }
-
-          item { HorizontalDivider() }
 
           item {
             LectureTextSection(title = "講義の概要とねらい", content = uiState.lecture.abstractText)
@@ -338,17 +334,21 @@ private fun LecturePlansSection(plans: List<LecturePlan>) {
       return
     }
 
-    val outline = MaterialTheme.colorScheme.outline
     val headerCells = listOf(
       PlanCellSpec(text = "回", weight = 0.15f),
       PlanCellSpec(text = "授業計画", weight = 0.45f),
       PlanCellSpec(text = "課題", weight = 0.40f),
     )
     Column {
+      HorizontalDivider(
+        thickness = 1.dp
+      )
       LecturePlanTableRow(
         cells = headerCells,
-        outlineColor = outline,
         isHeader = true,
+      )
+      HorizontalDivider(
+        thickness = 1.dp
       )
 
       plans.sortedBy { it.count }.forEach { plan ->
@@ -358,8 +358,10 @@ private fun LecturePlansSection(plans: List<LecturePlan>) {
             PlanCellSpec(text = plan.plan.orEmpty(), weight = 0.45f),
             PlanCellSpec(text = plan.assignment.orEmpty(), weight = 0.40f),
           ),
-          outlineColor = outline,
           isHeader = false,
+        )
+        HorizontalDivider(
+          thickness = 1.dp
         )
       }
     }
@@ -374,19 +376,25 @@ private data class PlanCellSpec(
 @Composable
 private fun LecturePlanTableRow(
   cells: List<PlanCellSpec>,
-  outlineColor: Color,
   isHeader: Boolean,
   modifier: Modifier = Modifier,
 ) {
-  Row(modifier = modifier.fillMaxWidth()) {
-    cells.forEachIndexed { index, cell ->
+  Row(
+    modifier = modifier
+      .fillMaxWidth()
+      .height(IntrinsicSize.Min),
+  ) {
+    VerticalDivider(
+      thickness = 1.dp
+    )
+    cells.forEach { cell ->
       PlanTableCell(
         text = cell.text,
         weight = cell.weight,
-        outlineColor = outlineColor,
-        isFirstColumn = index == 0,
-        drawTop = isHeader,
         isHeader = isHeader,
+      )
+      VerticalDivider(
+        thickness = 1.dp
       )
     }
   }
@@ -396,27 +404,12 @@ private fun LecturePlanTableRow(
 private fun RowScope.PlanTableCell(
   text: String,
   weight: Float,
-  outlineColor: Color,
-  isFirstColumn: Boolean,
-  drawTop: Boolean,
   isHeader: Boolean,
 ) {
-  val stroke = 1.dp
   Box(
     modifier = Modifier
       .weight(weight)
-      .drawBehind {
-        val s = stroke.toPx()
-        if (drawTop) {
-          drawLine(outlineColor, start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(size.width, 0f), strokeWidth = s)
-        }
-        drawLine(outlineColor, start = androidx.compose.ui.geometry.Offset(0f, size.height), end = androidx.compose.ui.geometry.Offset(size.width, size.height), strokeWidth = s)
-        if (isFirstColumn) {
-          drawLine(outlineColor, start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(0f, size.height), strokeWidth = s)
-        }
-        drawLine(outlineColor, start = androidx.compose.ui.geometry.Offset(size.width, 0f), end = androidx.compose.ui.geometry.Offset(size.width, size.height), strokeWidth = s)
-      }
-      .padding(horizontal = 6.dp, vertical = 8.dp),
+      .padding(horizontal = 3.dp, vertical = 4.dp),
   ) {
     Text(
       text = text,
