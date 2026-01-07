@@ -21,7 +21,7 @@ abstract class AppModule {
     fun provideDatabase(
       @ApplicationContext context: Context,
     ): DesyDatabase {
-      return DesyDatabase.open(context, null)
+      return DesyDatabase.open(context)
     }
   }
 

@@ -1,6 +1,7 @@
 package com.github.kavos113.desy.ui.search
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,121 +72,158 @@ private fun LectureSearchScreenContent(
   val selectedSemesters = remember { mutableStateListOf<Semester>() }
   val selectedTimetables = remember { mutableStateListOf<Pair<DayOfWeek, Int>>() }
 
-  Column(
+  LazyColumn(
     modifier = modifier
       .fillMaxSize()
       .padding(12.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-      Text("検索", style = MaterialTheme.typography.titleLarge)
-      Spacer(modifier = Modifier.weight(1f))
-      TextButton(onClick = onCancel) {
-        Text("戻る")
+    item {
+      Row(modifier = Modifier.fillMaxWidth()) {
+        Text("検索", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.weight(1f))
+        TextButton(onClick = onCancel) {
+          Text("戻る")
+        }
       }
     }
 
-    OutlinedTextField(
-      value = title,
-      onValueChange = { title = it },
-      modifier = Modifier.fillMaxWidth(),
-      label = { Text("講義名") },
-      singleLine = true,
-    )
+    item {
+      OutlinedTextField(
+        value = title,
+        onValueChange = { title = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text("講義名") },
+        singleLine = true,
+      )
+    }
 
-    OutlinedTextField(
-      value = teacherName,
-      onValueChange = { teacherName = it },
-      modifier = Modifier.fillMaxWidth(),
-      label = { Text("教員名") },
-      singleLine = true,
-    )
+    item {
+      OutlinedTextField(
+        value = teacherName,
+        onValueChange = { teacherName = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text("教員名") },
+        singleLine = true,
+      )
+    }
 
-    OutlinedTextField(
-      value = room,
-      onValueChange = { room = it },
-      modifier = Modifier.fillMaxWidth(),
-      label = { Text("教室") },
-      singleLine = true,
-    )
+    item {
+      OutlinedTextField(
+        value = room,
+        onValueChange = { room = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text("教室") },
+        singleLine = true,
+      )
+    }
 
-    OutlinedTextField(
-      value = yearText,
-      onValueChange = { yearText = it },
-      modifier = Modifier.fillMaxWidth(),
-      label = { Text("年度") },
-      singleLine = true,
-      placeholder = { Text("例: 2025") },
-    )
+    item {
+      OutlinedTextField(
+        value = yearText,
+        onValueChange = { yearText = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text("年度") },
+        singleLine = true,
+        placeholder = { Text("例: 2025") },
+      )
+    }
 
-    OutlinedTextField(
-      value = departmentsText,
-      onValueChange = { departmentsText = it },
-      modifier = Modifier.fillMaxWidth(),
-      label = { Text("開講元（複数は空白/カンマ区切り）") },
-    )
+    item {
+      OutlinedTextField(
+        value = departmentsText,
+        onValueChange = { departmentsText = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text("開講元（複数は空白/カンマ区切り）") },
+      )
+    }
 
-    OutlinedTextField(
-      value = keywordsText,
-      onValueChange = { keywordsText = it },
-      modifier = Modifier.fillMaxWidth(),
-      label = { Text("キーワード（複数は空白/カンマ区切り）") },
-    )
+    item {
+      OutlinedTextField(
+        value = keywordsText,
+        onValueChange = { keywordsText = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text("キーワード（複数は空白/カンマ区切り）") },
+      )
+    }
 
-    HorizontalDivider()
+    item {
+      HorizontalDivider()
+    }
 
-    Text("学年", style = MaterialTheme.typography.titleMedium)
-    LevelCheckboxRow(selectedLevels)
+    item {
+      Text("学年", style = MaterialTheme.typography.titleMedium)
+    }
+    item {
+      LevelCheckboxRow(selectedLevels)
+    }
 
-    Spacer(Modifier.height(4.dp))
+    item {
+      Spacer(Modifier.height(4.dp))
+    }
 
-    Text("学期(Quarter)", style = MaterialTheme.typography.titleMedium)
-    SemesterCheckboxRow(selectedSemesters)
+    item {
+      Text("学期(Quarter)", style = MaterialTheme.typography.titleMedium)
+    }
+    item {
+      SemesterCheckboxRow(selectedSemesters)
+    }
 
-    HorizontalDivider()
+    item {
+      HorizontalDivider()
+    }
 
-    Text("時間割", style = MaterialTheme.typography.titleMedium)
-    TimetablePicker(
-      selected = selectedTimetables,
-    )
+    item {
+      Text("時間割", style = MaterialTheme.typography.titleMedium)
+    }
+    item {
+      TimetablePicker(
+        selected = selectedTimetables,
+      )
+    }
 
-    HorizontalDivider()
+    item {
+      HorizontalDivider()
+    }
 
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    item {
       Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
       ) {
-        Checkbox(checked = filterNotResearch, onCheckedChange = { filterNotResearch = it })
-        Text("研究室配属系を除外")
-      }
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+          Checkbox(checked = filterNotResearch, onCheckedChange = { filterNotResearch = it })
+          Text("研究室配属系を除外")
+        }
 
-      Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(1f))
 
-      Button(
-        onClick = {
-          val query = SearchQuery(
-            title = title,
-            teacherName = teacherName,
-            room = room,
-            year = parseYearInput(yearText),
-            departments = parseDepartmentInput(departmentsText),
-            keywords = parseKeywordInput(keywordsText),
-            semesters = selectedSemesters.toList(),
-            timetables = selectedTimetables.map { (day, period) ->
-              TimeTable(lectureId = 0, dayOfWeek = day, period = period)
-            },
-            levels = selectedLevels.toList(),
-            filterNotResearch = filterNotResearch,
-          )
-          onSearch(query)
-        },
-      ) {
-        Text("Search")
+        Button(
+          onClick = {
+            val query = SearchQuery(
+              title = title,
+              teacherName = teacherName,
+              room = room,
+              year = parseYearInput(yearText),
+              departments = parseDepartmentInput(departmentsText),
+              keywords = parseKeywordInput(keywordsText),
+              semesters = selectedSemesters.toList(),
+              timetables = selectedTimetables.map { (day, period) ->
+                TimeTable(lectureId = 0, dayOfWeek = day, period = period)
+              },
+              levels = selectedLevels.toList(),
+              filterNotResearch = filterNotResearch,
+            )
+            onSearch(query)
+          },
+        ) {
+          Text("Search")
+        }
       }
     }
+
   }
 }
 
