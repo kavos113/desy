@@ -7,3 +7,5 @@ backend/presentation/scraper/fixture
 *.db
 *storybook.log
 storybook-static
+.vscode
+.idea
