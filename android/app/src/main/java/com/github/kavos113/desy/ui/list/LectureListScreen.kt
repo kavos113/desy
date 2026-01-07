@@ -1,5 +1,6 @@
 package com.github.kavos113.desy.ui.list
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -64,7 +66,7 @@ fun LectureListScreen(
       else -> {
         LazyColumn(
           modifier = Modifier.fillMaxWidth(),
-          verticalArrangement = Arrangement.spacedBy(6.dp),
+          verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
           items(uiState.items, key = { it.id }) { item ->
             LectureListRow(item, onClick = { onSelectLecture(item.id) })
@@ -203,10 +205,10 @@ private fun LectureListHeader() {
       .padding(vertical = 6.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
   ) {
-    HeaderCell("講義名", weight = 0.42f)
-    HeaderCell("時間割", weight = 0.22f)
-    HeaderCell("開講期", weight = 0.18f)
-    HeaderCell("学部/学科", weight = 0.18f)
+    HeaderCell("講義名", weight = 0.5f)
+    HeaderCell("時間割", weight = 0.2f)
+    HeaderCell("開講期", weight = 0.10f)
+    HeaderCell("学部/学科", weight = 0.2f)
   }
 }
 
@@ -216,13 +218,13 @@ private fun LectureListRow(item: LectureSummary, onClick: () -> Unit) {
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
-      .padding(vertical = 6.dp),
+      .padding(horizontal = 2.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
   ) {
-    BodyCell(item.title, weight = 0.42f)
-    BodyCell(formatLectureTimetable(item.timetables), weight = 0.22f)
-    BodyCell(formatLectureOpenTerm(item.timetables), weight = 0.18f)
-    BodyCell(item.department.orEmpty(), weight = 0.18f)
+    BodyCell(item.title, weight = 0.5f)
+    BodyCell(formatLectureTimetable(item.timetables), weight = 0.2f)
+    BodyCell(formatLectureOpenTerm(item.timetables), weight = 0.10f)
+    BodyCell(item.department.orEmpty(), weight = 0.2f)
   }
 }
 
@@ -233,7 +235,7 @@ private fun RowScope.HeaderCell(text: String, weight: Float) {
     style = MaterialTheme.typography.labelLarge,
     modifier = Modifier.weight(weight),
     maxLines = 1,
-    overflow = TextOverflow.Ellipsis,
+    overflow = TextOverflow.Clip,
   )
 }
 
@@ -243,8 +245,8 @@ private fun RowScope.BodyCell(text: String, weight: Float) {
     text = text,
     style = MaterialTheme.typography.bodyMedium,
     modifier = Modifier.weight(weight),
-    maxLines = 2,
-    overflow = TextOverflow.Ellipsis,
+    maxLines = 1,
+    overflow = TextOverflow.Clip,
   )
 }
 
