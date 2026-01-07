@@ -100,6 +100,7 @@ func (a *App) ScrapeAll() error {
 	defer cleanup()
 
 	for year := 2020; year <= time.Now().Year(); year++ {
+		log.Printf("scraping year %d", year)
 		_, err := a.scraperUsecase.ScrapeTopPageAndSave(ctx, year)
 		if err != nil {
 			return fmt.Errorf("scrape year %d: %w", year, err)

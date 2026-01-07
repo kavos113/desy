@@ -146,7 +146,7 @@ func (uc *scraperUsecase) ScrapeCourseListAndSave(ctx context.Context, listURL, 
 		}
 
 		detailURL := item.DetailURL
-		log.Printf("Scraping detail page: %s %s", item.Code, item.Title)
+		log.Printf("Scraping detail page: %s %s: %s", item.Code, item.Title, detailURL)
 		uc.reportProgress(ScrapeProgress{Total: total, Current: idx + 1, Code: strings.TrimSpace(item.Code), Title: strings.TrimSpace(item.Title)})
 
 		existing, err := uc.lectureRepo.FindByCode(item.Code, item.Title, item.OpenTerm)
@@ -278,12 +278,13 @@ func (uc *scraperUsecase) ScrapeTopPageAndSave(ctx context.Context, year int) ([
 		return nil, errors.New("scraper fetcher is not initialized")
 	}
 
-	reader, err := uc.fetcher.Fetch(ctx, scraper.TopPageURL)
+	url := fmt.Sprintf("%s/courses/%d", scraper.TopPageURL, year)
+	reader, err := uc.fetcher.Fetch(ctx, url)
 	if err != nil {
-		return nil, fmt.Errorf("fetch top page %s: %w", scraper.TopPageURL, err)
+		return nil, fmt.Errorf("fetch top page %s: %w", url, err)
 	}
 	if reader == nil {
-		return nil, fmt.Errorf("fetch top page %s: empty response", scraper.TopPageURL)
+		return nil, fmt.Errorf("fetch top page %s: empty response", url)
 	}
 	defer reader.Close()
 
