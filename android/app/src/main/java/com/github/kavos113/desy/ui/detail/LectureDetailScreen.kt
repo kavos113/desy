@@ -1,7 +1,9 @@
 package com.github.kavos113.desy.ui.detail
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +30,8 @@ import com.github.kavos113.desy.domain.Semester
 import com.github.kavos113.desy.domain.Teacher
 import com.github.kavos113.desy.domain.TimeTable
 import com.github.kavos113.desy.ui.theme.DesyTheme
+import com.github.kavos113.desy.ui.theme.stMainColor
+import com.github.kavos113.desy.ui.theme.stSubColor
 import com.github.kavos113.desy.ui.viewmodel.LectureDetailUiState
 
 @Composable
@@ -55,7 +59,6 @@ fun LectureDetailScreen(
         Text("戻る")
       }
       Spacer(modifier = Modifier.weight(1f))
-      Text("講義詳細", style = MaterialTheme.typography.titleLarge)
     }
 
     when {
@@ -157,6 +160,16 @@ private fun LectureTitleSection(lecture: Lecture) {
   Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
     Text(lecture.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
     Text(lecture.englishTitle.orEmpty(), style = MaterialTheme.typography.bodyMedium)
+    Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+      HorizontalDivider(
+        thickness = 2.dp,
+        color = stMainColor
+      )
+      HorizontalDivider(
+        thickness = 1.dp,
+        color = stSubColor
+      )
+    }
   }
 }
 
@@ -176,21 +189,56 @@ private fun LectureMetaSection(lecture: Lecture) {
     val openPeriod = listOfNotNull(yearPart, semesterText.takeIf { it.isNotBlank() }).joinToString(" ")
     MetaRow(label = "開講時期", value = openPeriod)
 
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-      Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text("科目コード", style = MaterialTheme.typography.labelLarge)
-        Text(lecture.code.orEmpty(), style = MaterialTheme.typography.bodyMedium)
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+    ) {
+      Row(
+        modifier = Modifier.weight(1f),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+      ) {
+        Text(
+          "科目コード",
+          style = MaterialTheme.typography.labelSmall,
+          modifier = Modifier.weight(1f)
+        )
+        Text(
+          lecture.code.orEmpty(),
+          style = MaterialTheme.typography.bodyMedium,
+          modifier = Modifier.weight(1f)
+        )
       }
-      Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text("単位数", style = MaterialTheme.typography.labelLarge)
-        Text(lecture.credit?.toString().orEmpty(), style = MaterialTheme.typography.bodyMedium)
+      Row(
+        modifier = Modifier.weight(1f),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+      ) {
+        Text(
+          "単位数",
+          style = MaterialTheme.typography.labelSmall,
+          modifier = Modifier.weight(1f)
+        )
+        Text(
+          lecture.credit?.toString().orEmpty(),
+          style = MaterialTheme.typography.bodyMedium,
+          modifier = Modifier.weight(1f)
+        )
       }
     }
 
     Row(modifier = Modifier.fillMaxWidth()) {
-      Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text("言語", style = MaterialTheme.typography.labelLarge)
-        Text(lecture.language.orEmpty(), style = MaterialTheme.typography.bodyMedium)
+      Row(
+        modifier = Modifier.weight(1f),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+      ) {
+        Text(
+          "言語",
+          style = MaterialTheme.typography.labelSmall,
+          modifier = Modifier.weight(1f)
+        )
+        Text(
+          lecture.language.orEmpty(),
+          style = MaterialTheme.typography.bodyMedium,
+          modifier = Modifier.weight(1f)
+        )
       }
     }
   }
@@ -198,16 +246,32 @@ private fun LectureMetaSection(lecture: Lecture) {
 
 @Composable
 private fun MetaRow(label: String, value: String) {
-  Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-    Text(label, style = MaterialTheme.typography.labelLarge)
-    Text(if (value.isBlank()) "" else value, style = MaterialTheme.typography.bodyMedium)
+  Row {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelSmall,
+      modifier = Modifier.weight(1f)
+    )
+    Text(
+      text = value.ifBlank { "" },
+      style = MaterialTheme.typography.bodyMedium,
+      modifier = Modifier.weight(1f)
+    )
   }
 }
 
 @Composable
 private fun LectureTextSection(title: String, content: String?) {
-  Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-    Text(title, style = MaterialTheme.typography.titleMedium)
+  Column(
+    verticalArrangement = Arrangement.spacedBy(6.dp)
+  ) {
+    Column {
+      Text(title, style = MaterialTheme.typography.titleMedium)
+      HorizontalDivider(
+        thickness = 2.dp,
+        color = stSubColor
+      )
+    }
     val lines = splitIntoLines(content)
     if (lines.isEmpty()) {
       Text("", style = MaterialTheme.typography.bodyMedium)
@@ -222,7 +286,13 @@ private fun LectureTextSection(title: String, content: String?) {
 @Composable
 private fun LectureKeywordsSection(keywords: List<String>) {
   Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-    Text("キーワード", style = MaterialTheme.typography.titleMedium)
+    Column {
+      Text("キーワード", style = MaterialTheme.typography.titleMedium)
+      HorizontalDivider(
+        thickness = 2.dp,
+        color = stSubColor
+      )
+    }
     Text(keywords.joinToString(", "), style = MaterialTheme.typography.bodyMedium)
   }
 }
@@ -230,7 +300,13 @@ private fun LectureKeywordsSection(keywords: List<String>) {
 @Composable
 private fun LectureListSection(title: String, content: String?) {
   Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-    Text(title, style = MaterialTheme.typography.titleMedium)
+    Column {
+      Text(title, style = MaterialTheme.typography.titleMedium)
+      HorizontalDivider(
+        thickness = 2.dp,
+        color = stSubColor
+      )
+    }
     val items = splitIntoLines(content)
     if (items.isEmpty()) {
       Text("", style = MaterialTheme.typography.bodyMedium)
@@ -245,7 +321,13 @@ private fun LectureListSection(title: String, content: String?) {
 @Composable
 private fun LecturePlansSection(plans: List<LecturePlan>) {
   Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-    Text("授業計画・課題", style = MaterialTheme.typography.titleMedium)
+    Column {
+      Text("授業計画・課題", style = MaterialTheme.typography.titleMedium)
+      HorizontalDivider(
+        thickness = 2.dp,
+        color = stSubColor
+      )
+    }
 
     if (plans.isEmpty()) {
       Text("", style = MaterialTheme.typography.bodyMedium)
@@ -253,16 +335,16 @@ private fun LecturePlansSection(plans: List<LecturePlan>) {
     }
 
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-      Text("回", modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.labelLarge)
-      Text("授業計画", modifier = Modifier.weight(0.44f), style = MaterialTheme.typography.labelLarge)
-      Text("課題", modifier = Modifier.weight(0.44f), style = MaterialTheme.typography.labelLarge)
+      Text("回", modifier = Modifier.weight(0.1f), style = MaterialTheme.typography.labelSmall)
+      Text("授業計画", modifier = Modifier.weight(0.5f), style = MaterialTheme.typography.labelSmall)
+      Text("課題", modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.labelSmall)
     }
 
     plans.sortedBy { it.count }.forEach { plan ->
       Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("第${plan.count}回", modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.bodySmall)
-        Text(plan.plan.orEmpty(), modifier = Modifier.weight(0.44f), style = MaterialTheme.typography.bodySmall)
-        Text(plan.assignment.orEmpty(), modifier = Modifier.weight(0.44f), style = MaterialTheme.typography.bodySmall)
+        Text("第${plan.count}回", modifier = Modifier.weight(0.1f), style = MaterialTheme.typography.bodySmall)
+        Text(plan.plan.orEmpty(), modifier = Modifier.weight(0.5f), style = MaterialTheme.typography.bodySmall)
+        Text(plan.assignment.orEmpty(), modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.bodySmall)
       }
     }
   }
@@ -274,7 +356,13 @@ private fun LectureRelatedSection(
   onSelectRelatedLecture: (Int) -> Unit,
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-    Text("関連する科目", style = MaterialTheme.typography.titleMedium)
+    Column {
+      Text("関連する科目", style = MaterialTheme.typography.titleMedium)
+      HorizontalDivider(
+        thickness = 2.dp,
+        color = stSubColor
+      )
+    }
 
     if (relatedCourses.isEmpty()) {
       Text("関連科目の情報がありません。", style = MaterialTheme.typography.bodyMedium)
@@ -291,9 +379,15 @@ private fun LectureRelatedSection(
         }
 
         if (clickable) {
-          TextButton(onClick = { onSelectRelatedLecture(course.id) }) {
-            Text(label)
-          }
+          Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = stMainColor,
+            modifier = Modifier
+              .clickable {
+                onSelectRelatedLecture(course.id)
+              }
+          )
         } else {
           val text = if (!course.title.isNullOrBlank()) {
             "${course.code} / ${course.title}"

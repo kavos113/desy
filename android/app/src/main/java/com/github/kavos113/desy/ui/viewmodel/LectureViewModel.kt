@@ -82,6 +82,7 @@ class LectureViewModel @Inject constructor(
 
                 val code = relatedLecture?.code?.trim().orEmpty().ifBlank { relatedId.toString() }
                 val title = relatedLecture?.title
+                removeIf { it.code == code }
                 add(RelatedCourseEntry(code = code, id = relatedId, title = title))
               }
           }
