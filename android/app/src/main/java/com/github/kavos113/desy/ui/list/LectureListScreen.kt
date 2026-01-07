@@ -1,8 +1,8 @@
 package com.github.kavos113.desy.ui.list
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -17,7 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextOverflow
@@ -40,7 +42,6 @@ fun LectureListScreen(
     modifier = modifier
       .fillMaxSize()
       .padding(12.dp),
-    verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
     Row(modifier = Modifier.fillMaxWidth()) {
       Spacer(modifier = Modifier.weight(1f))
@@ -200,56 +201,101 @@ private fun LectureListErrorPreview() {
 
 @Composable
 private fun LectureListHeader() {
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(vertical = 6.dp),
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    verticalAlignment = Alignment.CenterVertically
-  ) {
-    HeaderCell("講義名", weight = 0.5f)
-    HeaderCell("時間割", weight = 0.2f)
-    HeaderCell("開講期", weight = 0.05f)
-    HeaderCell("学部/学科", weight = 0.25f)
-  }
+  LectureListTableRow(
+    cells = listOf(
+      LectureListCellSpec(text = "講義名", weight = 0.5f),
+      LectureListCellSpec(text = "時間割", weight = 0.2f),
+      LectureListCellSpec(text = "開講期", weight = 0.1f),
+      LectureListCellSpec(text = "学部/学科", weight = 0.2f),
+    ),
+    isHeader = true,
+    onClick = null,
+  )
 }
 
 @Composable
 private fun LectureListRow(item: LectureSummary, onClick: () -> Unit) {
+  LectureListTableRow(
+    cells = listOf(
+      LectureListCellSpec(text = item.title, weight = 0.5f),
+      LectureListCellSpec(text = formatLectureTimetable(item.timetables), weight = 0.2f),
+      LectureListCellSpec(text = formatLectureOpenTerm(item.timetables), weight = 0.1f),
+      LectureListCellSpec(text = item.department.orEmpty(), weight = 0.2f),
+    ),
+    isHeader = false,
+    onClick = onClick,
+  )
+}
+
+private data class LectureListCellSpec(
+  val text: String,
+  val weight: Float,
+)
+
+@Composable
+private fun LectureListTableRow(
+  cells: List<LectureListCellSpec>,
+  isHeader: Boolean,
+  onClick: (() -> Unit)?,
+  modifier: Modifier = Modifier,
+) {
+  val outline = MaterialTheme.colorScheme.outline
   Row(
-    modifier = Modifier
+    modifier = modifier
       .fillMaxWidth()
-      .clickable(onClick = onClick)
-      .padding(horizontal = 2.dp),
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    verticalAlignment = Alignment.CenterVertically
+      .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+    verticalAlignment = Alignment.CenterVertically,
   ) {
-    BodyCell(item.title, weight = 0.5f)
-    BodyCell(formatLectureTimetable(item.timetables), weight = 0.2f)
-    BodyCell(formatLectureOpenTerm(item.timetables), weight = 0.10f)
-    BodyCell(item.department.orEmpty(), weight = 0.2f)
+    cells.forEachIndexed { index, cell ->
+      TableCell(
+        text = cell.text,
+        weight = cell.weight,
+        outlineColor = outline,
+        isFirstColumn = index == 0,
+        drawTop = isHeader,
+        isHeader = isHeader,
+      )
+    }
   }
 }
 
 @Composable
-private fun RowScope.HeaderCell(text: String, weight: Float) {
-  Text(
-    text = text,
-    style = MaterialTheme.typography.labelLarge,
-    modifier = Modifier.weight(weight),
-    maxLines = 1,
-    overflow = TextOverflow.Clip,
-  )
+private fun RowScope.TableCell(
+  text: String,
+  weight: Float,
+  outlineColor: Color,
+  isFirstColumn: Boolean,
+  drawTop: Boolean,
+  isHeader: Boolean,
+) {
+  val stroke = 1.dp
+  Box(
+    modifier = Modifier
+      .weight(weight)
+      .drawBehind {
+        val s = stroke.toPx()
+        // top border only for the first(header) row
+        if (drawTop) {
+          drawLine(outlineColor, start = Offset(0f, 0f), end = Offset(size.width, 0f), strokeWidth = s)
+        }
+        // bottom border for every row
+        drawLine(outlineColor, start = Offset(0f, size.height), end = Offset(size.width, size.height), strokeWidth = s)
+        // left border only for first column
+        if (isFirstColumn) {
+          drawLine(outlineColor, start = Offset(0f, 0f), end = Offset(0f, size.height), strokeWidth = s)
+        }
+        // right border for every cell
+        drawLine(outlineColor, start = Offset(size.width, 0f), end = Offset(size.width, size.height), strokeWidth = s)
+      }
+      .padding(horizontal = 3.dp, vertical = 4.dp),
+  ) {
+    Text(
+      text = text,
+      style = if (isHeader) MaterialTheme.typography.labelLarge else MaterialTheme.typography.bodyMedium,
+      maxLines = 1,
+      overflow = TextOverflow.Clip,
+    )
+  }
 }
 
-@Composable
-private fun RowScope.BodyCell(text: String, weight: Float) {
-  Text(
-    text = text,
-    style = MaterialTheme.typography.bodyMedium,
-    modifier = Modifier.weight(weight),
-    maxLines = 1,
-    overflow = TextOverflow.Clip,
-  )
-}
 

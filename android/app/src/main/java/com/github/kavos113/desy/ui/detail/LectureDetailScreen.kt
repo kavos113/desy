@@ -1,10 +1,12 @@
 package com.github.kavos113.desy.ui.detail
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +21,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -334,19 +338,90 @@ private fun LecturePlansSection(plans: List<LecturePlan>) {
       return
     }
 
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-      Text("回", modifier = Modifier.weight(0.1f), style = MaterialTheme.typography.labelSmall)
-      Text("授業計画", modifier = Modifier.weight(0.5f), style = MaterialTheme.typography.labelSmall)
-      Text("課題", modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.labelSmall)
-    }
+    val outline = MaterialTheme.colorScheme.outline
+    val headerCells = listOf(
+      PlanCellSpec(text = "回", weight = 0.15f),
+      PlanCellSpec(text = "授業計画", weight = 0.45f),
+      PlanCellSpec(text = "課題", weight = 0.40f),
+    )
+    Column {
+      LecturePlanTableRow(
+        cells = headerCells,
+        outlineColor = outline,
+        isHeader = true,
+      )
 
-    plans.sortedBy { it.count }.forEach { plan ->
-      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("第${plan.count}回", modifier = Modifier.weight(0.1f), style = MaterialTheme.typography.bodySmall)
-        Text(plan.plan.orEmpty(), modifier = Modifier.weight(0.5f), style = MaterialTheme.typography.bodySmall)
-        Text(plan.assignment.orEmpty(), modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.bodySmall)
+      plans.sortedBy { it.count }.forEach { plan ->
+        LecturePlanTableRow(
+          cells = listOf(
+            PlanCellSpec(text = "第${plan.count}回", weight = 0.15f),
+            PlanCellSpec(text = plan.plan.orEmpty(), weight = 0.45f),
+            PlanCellSpec(text = plan.assignment.orEmpty(), weight = 0.40f),
+          ),
+          outlineColor = outline,
+          isHeader = false,
+        )
       }
     }
+  }
+}
+
+private data class PlanCellSpec(
+  val text: String,
+  val weight: Float,
+)
+
+@Composable
+private fun LecturePlanTableRow(
+  cells: List<PlanCellSpec>,
+  outlineColor: Color,
+  isHeader: Boolean,
+  modifier: Modifier = Modifier,
+) {
+  Row(modifier = modifier.fillMaxWidth()) {
+    cells.forEachIndexed { index, cell ->
+      PlanTableCell(
+        text = cell.text,
+        weight = cell.weight,
+        outlineColor = outlineColor,
+        isFirstColumn = index == 0,
+        drawTop = isHeader,
+        isHeader = isHeader,
+      )
+    }
+  }
+}
+
+@Composable
+private fun RowScope.PlanTableCell(
+  text: String,
+  weight: Float,
+  outlineColor: Color,
+  isFirstColumn: Boolean,
+  drawTop: Boolean,
+  isHeader: Boolean,
+) {
+  val stroke = 1.dp
+  Box(
+    modifier = Modifier
+      .weight(weight)
+      .drawBehind {
+        val s = stroke.toPx()
+        if (drawTop) {
+          drawLine(outlineColor, start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(size.width, 0f), strokeWidth = s)
+        }
+        drawLine(outlineColor, start = androidx.compose.ui.geometry.Offset(0f, size.height), end = androidx.compose.ui.geometry.Offset(size.width, size.height), strokeWidth = s)
+        if (isFirstColumn) {
+          drawLine(outlineColor, start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(0f, size.height), strokeWidth = s)
+        }
+        drawLine(outlineColor, start = androidx.compose.ui.geometry.Offset(size.width, 0f), end = androidx.compose.ui.geometry.Offset(size.width, size.height), strokeWidth = s)
+      }
+      .padding(horizontal = 6.dp, vertical = 8.dp),
+  ) {
+    Text(
+      text = text,
+      style = if (isHeader) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall,
+    )
   }
 }
 
