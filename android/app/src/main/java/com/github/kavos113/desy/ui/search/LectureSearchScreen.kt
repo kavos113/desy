@@ -22,6 +22,9 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -252,51 +255,55 @@ private fun DepartmentMultiSelect(
 ) {
   var expanded by remember { mutableStateOf(false) }
 
-  Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-    Box {
-      OutlinedTextField(
-        value = selected.joinToString(", "),
-        onValueChange = {},
-        modifier = Modifier
-          .fillMaxWidth()
-          .clickable { expanded = true },
-        readOnly = true,
-        label = { Text(label) },
-        placeholder = { Text("選択してください") },
-      )
+  ExposedDropdownMenuBox(
+    expanded = expanded,
+    onExpandedChange = { expanded = !expanded },
+    modifier = modifier.fillMaxWidth()
+  ) {
+    OutlinedTextField(
+      value = selected.joinToString(", "),
+      onValueChange = {},
+      modifier = Modifier
+        .fillMaxWidth()
+        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+      readOnly = true,
+      label = { Text(label) },
+      placeholder = { Text("選択してください") },
+      trailingIcon = {
+        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+      },
+      colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+    )
 
-      DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = { expanded = false },
-        modifier = Modifier
-          .fillMaxWidth(0.95f)
-          .heightIn(max = 500.dp),
-      ) {
-        options.forEach { option ->
-          val checked = selected.contains(option)
-          DropdownMenuItem(
-            text = {
-              Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-              ) {
-                Checkbox(
-                  checked = checked,
-                  onCheckedChange = null,
-                )
-                Text(option)
-              }
-            },
-            onClick = {
-              if (checked) {
-                selected.remove(option)
-              } else {
-                selected.add(option)
-              }
-            },
-          )
-        }
+    ExposedDropdownMenu(
+      expanded = expanded,
+      onDismissRequest = { expanded = false },
+      modifier = Modifier.heightIn(max = 500.dp)
+    ) {
+      options.forEach { option ->
+        val checked = selected.contains(option)
+        DropdownMenuItem(
+          text = {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(8.dp),
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              Checkbox(
+                checked = checked,
+                onCheckedChange = null,
+              )
+              Text(option)
+            }
+          },
+          onClick = {
+            if (checked) {
+              selected.remove(option)
+            } else {
+              selected.add(option)
+            }
+          },
+        )
       }
     }
   }

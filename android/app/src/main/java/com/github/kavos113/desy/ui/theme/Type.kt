@@ -11,15 +11,15 @@ val Typography = Typography(
   bodyLarge = TextStyle(
     fontFamily = FontFamily.Default,
     fontWeight = FontWeight.Normal,
-    fontSize = 12.sp,
-    lineHeight = 15.sp,
+    fontSize = 15.sp,
+    lineHeight = 18.sp,
     letterSpacing = 0.5.sp
   ),
   bodyMedium = TextStyle(
     fontFamily = FontFamily.Default,
     fontWeight = FontWeight.Normal,
-    fontSize = 10.sp,
-    lineHeight = 12.sp,
+    fontSize = 12.sp,
+    lineHeight = 15.sp,
     letterSpacing = 0.5.sp
   ),
   bodySmall = TextStyle(
@@ -39,15 +39,15 @@ val Typography = Typography(
   labelMedium = TextStyle(
     fontFamily = FontFamily.Default,
     fontWeight = FontWeight.Bold,
-    fontSize = 12.sp,
+    fontSize = 14.sp,
     lineHeight = 18.sp,
     letterSpacing = 0.5.sp
   ),
   labelSmall = TextStyle(
     fontFamily = FontFamily.Default,
     fontWeight = FontWeight.Bold,
-    fontSize = 10.sp,
-    lineHeight = 12.sp,
+    fontSize = 12.sp,
+    lineHeight = 18.sp,
     letterSpacing = 0.5.sp
   )
   /* Other default text styles to override

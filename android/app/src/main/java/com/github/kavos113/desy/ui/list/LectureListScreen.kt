@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -204,11 +205,12 @@ private fun LectureListHeader() {
       .fillMaxWidth()
       .padding(vertical = 6.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
+    verticalAlignment = Alignment.CenterVertically
   ) {
     HeaderCell("講義名", weight = 0.5f)
     HeaderCell("時間割", weight = 0.2f)
-    HeaderCell("開講期", weight = 0.10f)
-    HeaderCell("学部/学科", weight = 0.2f)
+    HeaderCell("開講期", weight = 0.05f)
+    HeaderCell("学部/学科", weight = 0.25f)
   }
 }
 
@@ -220,6 +222,7 @@ private fun LectureListRow(item: LectureSummary, onClick: () -> Unit) {
       .clickable(onClick = onClick)
       .padding(horizontal = 2.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
+    verticalAlignment = Alignment.CenterVertically
   ) {
     BodyCell(item.title, weight = 0.5f)
     BodyCell(formatLectureTimetable(item.timetables), weight = 0.2f)
