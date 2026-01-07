@@ -63,6 +63,120 @@ fun LectureListScreen(
   }
 }
 
+@Preview(showBackground = true, widthDp = 420)
+@Composable
+private fun LectureListScreenPreview() {
+  val sample = LectureListUiState(
+    isLoading = false,
+    items = listOf(
+      LectureSummary(
+        id = 1,
+        university = "Sample University",
+        title = "プログラミング基礎",
+        department = "情報学部",
+        timetables = listOf(
+          TimeTable(
+            lectureId = 1,
+            semester = Semester.spring,
+            dayOfWeek = DayOfWeek.monday,
+            period = 1,
+          ),
+          TimeTable(
+            lectureId = 1,
+            semester = Semester.fall,
+            dayOfWeek = DayOfWeek.wednesday,
+            period = 2,
+          ),
+        ),
+      ),
+      LectureSummary(
+        id = 2,
+        university = "Sample University",
+        title = "データベース",
+        department = "工学部",
+        timetables = listOf(
+          TimeTable(
+            lectureId = 2,
+            semester = Semester.summer,
+            dayOfWeek = DayOfWeek.thursday,
+            period = 3,
+          ),
+        ),
+      ),
+    ),
+  )
+
+  DesyTheme {
+    LectureListScreen(uiState = sample)
+  }
+}
+
+@Preview(showBackground = true, widthDp = 420)
+@Composable
+private fun LectureListHeaderPreview() {
+  DesyTheme {
+    Column(modifier = Modifier.padding(12.dp)) {
+      LectureListHeader()
+    }
+  }
+}
+
+@Preview(showBackground = true, widthDp = 420)
+@Composable
+private fun LectureListRowPreview() {
+  val item = LectureSummary(
+    id = 1,
+    university = "Sample University",
+    title = "線形代数",
+    department = "理学院",
+    timetables = listOf(
+      TimeTable(
+        lectureId = 1,
+        semester = Semester.spring,
+        dayOfWeek = DayOfWeek.tuesday,
+        period = 2,
+      ),
+    ),
+  )
+
+  DesyTheme {
+    Column(modifier = Modifier.padding(12.dp)) {
+      LectureListHeader()
+      LectureListRow(item)
+    }
+  }
+}
+
+@Preview(showBackground = true, widthDp = 420)
+@Composable
+private fun LectureListEmptyPreview() {
+  DesyTheme {
+    LectureListScreen(
+      uiState = LectureListUiState(isLoading = false, items = emptyList()),
+    )
+  }
+}
+
+@Preview(showBackground = true, widthDp = 420)
+@Composable
+private fun LectureListLoadingPreview() {
+  DesyTheme {
+    LectureListScreen(
+      uiState = LectureListUiState(isLoading = true),
+    )
+  }
+}
+
+@Preview(showBackground = true, widthDp = 420)
+@Composable
+private fun LectureListErrorPreview() {
+  DesyTheme {
+    LectureListScreen(
+      uiState = LectureListUiState(isLoading = false, errorMessage = "エラーが発生しました"),
+    )
+  }
+}
+
 @Composable
 private fun LectureListHeader() {
   Row(
@@ -113,50 +227,3 @@ private fun RowScope.BodyCell(text: String, weight: Float) {
   )
 }
 
-@Preview(showBackground = true, widthDp = 420)
-@Composable
-private fun LectureListScreenPreview() {
-  val sample = LectureListUiState(
-    isLoading = false,
-    items = listOf(
-      LectureSummary(
-        id = 1,
-        university = "Sample University",
-        title = "プログラミング基礎",
-        department = "情報学部",
-        timetables = listOf(
-          TimeTable(
-            lectureId = 1,
-            semester = Semester.spring,
-            dayOfWeek = DayOfWeek.monday,
-            period = 1,
-          ),
-          TimeTable(
-            lectureId = 1,
-            semester = Semester.fall,
-            dayOfWeek = DayOfWeek.wednesday,
-            period = 2,
-          ),
-        ),
-      ),
-      LectureSummary(
-        id = 2,
-        university = "Sample University",
-        title = "データベース",
-        department = "工学部",
-        timetables = listOf(
-          TimeTable(
-            lectureId = 2,
-            semester = Semester.summer,
-            dayOfWeek = DayOfWeek.thursday,
-            period = 3,
-          ),
-        ),
-      ),
-    ),
-  )
-
-  DesyTheme {
-    LectureListScreen(uiState = sample)
-  }
-}
