@@ -14,14 +14,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -70,13 +77,13 @@ private fun LectureSearchScreenContent(
   var teacherName by remember { mutableStateOf("") }
   var room by remember { mutableStateOf("") }
   var yearText by remember { mutableStateOf("") }
-  var departmentsText by remember { mutableStateOf("") }
   var keywordsText by remember { mutableStateOf("") }
   var filterNotResearch by remember { mutableStateOf(false) }
 
   val selectedLevels = remember { mutableStateListOf<Level>() }
   val selectedSemesters = remember { mutableStateListOf<Semester>() }
   val selectedTimetables = remember { mutableStateListOf<Pair<DayOfWeek, Int>>() }
+  val selectedDepartments = remember { mutableStateListOf<String>() }
 
   LazyColumn(
     modifier = modifier
@@ -136,11 +143,10 @@ private fun LectureSearchScreenContent(
     }
 
     item {
-      OutlinedTextField(
-        value = departmentsText,
-        onValueChange = { departmentsText = it },
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text("開講元（複数は空白/カンマ区切り）") },
+      DepartmentMultiSelect(
+        label = "開講元",
+        options = DepartmentOptions.mobileDepartments,
+        selected = selectedDepartments,
       )
     }
 
@@ -213,7 +219,7 @@ private fun LectureSearchScreenContent(
               teacherName = teacherName,
               room = room,
               year = parseYearInput(yearText),
-              departments = parseDepartmentInput(departmentsText),
+              departments = selectedDepartments.toList(),
               keywords = parseKeywordInput(keywordsText),
               semesters = selectedSemesters.toList(),
               timetables = selectedTimetables.map { (day, period) ->
@@ -233,6 +239,81 @@ private fun LectureSearchScreenContent(
       }
     }
 
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DepartmentMultiSelect(
+  label: String,
+  options: List<String>,
+  selected: MutableList<String>,
+  modifier: Modifier = Modifier,
+) {
+  var expanded by remember { mutableStateOf(false) }
+
+  Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Box {
+      OutlinedTextField(
+        value = selected.joinToString(", "),
+        onValueChange = {},
+        modifier = Modifier
+          .fillMaxWidth()
+          .clickable { expanded = true },
+        readOnly = true,
+        label = { Text(label) },
+        placeholder = { Text("選択してください") },
+      )
+
+      DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+        modifier = Modifier
+          .fillMaxWidth(0.95f)
+          .heightIn(max = 500.dp),
+      ) {
+        options.forEach { option ->
+          val checked = selected.contains(option)
+          DropdownMenuItem(
+            text = {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+              ) {
+                Checkbox(
+                  checked = checked,
+                  onCheckedChange = null,
+                )
+                Text(option)
+              }
+            },
+            onClick = {
+              if (checked) {
+                selected.remove(option)
+              } else {
+                selected.add(option)
+              }
+            },
+          )
+        }
+      }
+    }
+  }
+}
+
+@Preview(showBackground = true, widthDp = 420)
+@Composable
+private fun DepartmentMultiSelectPreview() {
+  val selected = remember { mutableStateListOf("理学院", "情報工学系") }
+  DesyTheme {
+    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      DepartmentMultiSelect(
+        label = "開講元",
+        options = DepartmentOptions.mobileDepartments,
+        selected = selected,
+      )
+    }
   }
 }
 
@@ -464,8 +545,16 @@ private fun LabeledCheckbox(
   checked: Boolean,
   onCheckedChange: (Boolean) -> Unit,
 ) {
-  Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-    Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+  Row(
+    horizontalArrangement = Arrangement.spacedBy(6.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    modifier = Modifier
+      .height(24.dp)
+  ) {
+    Checkbox(
+      checked = checked,
+      onCheckedChange = onCheckedChange,
+    )
     Text(label)
   }
 }
