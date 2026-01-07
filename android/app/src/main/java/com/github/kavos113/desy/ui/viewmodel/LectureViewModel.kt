@@ -21,15 +21,11 @@ class LectureViewModel @Inject constructor(
   private val lectureUsecase: LectureUsecase,
 ) : ViewModel() {
 
-  var uiState: LectureListUiState by mutableStateOf(LectureListUiState(isLoading = true))
+  var uiState: LectureListUiState by mutableStateOf(LectureListUiState())
     private set
 
   var detailUiState: LectureDetailUiState by mutableStateOf(LectureDetailUiState())
     private set
-
-  init {
-    loadLectures(SearchQuery())
-  }
 
   fun loadLectures(query: SearchQuery) {
     uiState = uiState.copy(query = query, isLoading = true, errorMessage = null)

@@ -113,6 +113,22 @@ export type Day = '月' | '火' | '水' | '木' | '金';
 export const DAYS: Day[] = ['月', '火', '水', '木', '金'];
 
 export type Period = '1' | '2' | '3' | '4' | '5';
+export type PeriodForQuery = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+export const periodForQueriesFromPeriod = (period: Period): PeriodForQuery[] => {
+  switch (period) {
+    case '1':
+      return [1, 2];
+    case '2':
+      return [3, 4];
+    case '3':
+      return [5, 6];
+    case '4':
+      return [7, 8];
+    case '5':
+      return [9, 10];
+  }
+}
 
 export const PERIODS: Period[] = ['1', '2', '3', '4', '5'];
 
@@ -299,10 +315,6 @@ const DAY_TO_DOMAIN: Record<Day, string> = {
 
 export function dayToDomain(day: Day): string {
   return DAY_TO_DOMAIN[day];
-}
-
-export function periodToNumber(period: Period): number {
-  return Number.parseInt(period, 10);
 }
 
 export function gradeLabelToLevel(label: string): number | undefined {

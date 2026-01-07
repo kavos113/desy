@@ -8,7 +8,7 @@ import {
   gradeLabelToLevel,
   parseKeywordInput,
   parseYearLabel,
-  periodToNumber,
+  periodForQueriesFromPeriod,
   quarterToSemester
 } from '../../constants';
 import type { SearchConditionKey, SearchState, SearchTimetableSelection } from './types';
@@ -48,12 +48,15 @@ const buildSearchQuery = (state: SearchState) => {
       .map(parseYearLabel)
       .find((value): value is number => typeof value === 'number') ?? 0;
 
-  const timetables = state.timetable.map((item) =>
-    domain.TimeTable.createFrom({
-      DayOfWeek: dayToDomain(item.day),
-      Period: periodToNumber(item.period)
-    })
-  );
+  const timetables = state.timetable.map((item) => {
+    const periods = periodForQueriesFromPeriod(item.period);
+    return periods.map((period) =>
+      domain.TimeTable.createFrom({
+        DayOfWeek: dayToDomain(item.day),
+        Period: period
+      })
+    );
+  }).flat();
 
   const semesters = state.quarter
     .map((label) => quarterToSemester(label))
@@ -101,6 +104,7 @@ const Search = ({ className, onSearch, onBack }: SearchProps) => {
     setIsSearching(true);
     try {
       const query = buildSearchQuery(condition);
+      console.log(query)
       const results = await SearchLectures(query);
       onSearch?.(results);
       onBack?.();

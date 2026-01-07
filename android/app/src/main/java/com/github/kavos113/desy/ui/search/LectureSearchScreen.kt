@@ -9,7 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,8 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +29,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.github.kavos113.desy.domain.DayOfWeek
@@ -211,8 +217,11 @@ private fun LectureSearchScreenContent(
               keywords = parseKeywordInput(keywordsText),
               semesters = selectedSemesters.toList(),
               timetables = selectedTimetables.map { (day, period) ->
-                TimeTable(lectureId = 0, dayOfWeek = day, period = period)
-              },
+                listOf(
+                  TimeTable(lectureId = 0, dayOfWeek = day, period = 2 * period - 1),
+                  TimeTable(lectureId = 0, dayOfWeek = day, period = 2 * period)
+                )
+              }.flatten(),
               levels = selectedLevels.toList(),
               filterNotResearch = filterNotResearch,
             )
@@ -306,62 +315,111 @@ private fun SemesterCheckboxRowPreview() {
 private fun TimetablePicker(
   selected: MutableList<Pair<DayOfWeek, Int>>,
 ) {
-  var dayExpanded by remember { mutableStateOf(false) }
-  var periodExpanded by remember { mutableStateOf(false) }
-  var selectedDay by remember { mutableStateOf(DayOfWeek.monday) }
-  var selectedPeriod by remember { mutableStateOf(1) }
+  val days = listOf(
+    DayOfWeek.monday,
+    DayOfWeek.tuesday,
+    DayOfWeek.wednesday,
+    DayOfWeek.thursday,
+    DayOfWeek.friday,
+  )
+  val periods = (1..5).toList()
+
+  fun isChecked(day: DayOfWeek, period: Int): Boolean {
+    return selected.contains(day to period)
+  }
+
+  fun toggle(day: DayOfWeek, period: Int) {
+    val entry = day to period
+    if (selected.contains(entry)) {
+      selected.remove(entry)
+    } else {
+      selected.add(entry)
+    }
+  }
+
+  fun toggleDay(day: DayOfWeek) {
+    periods.forEach { period ->
+      toggle(day, period)
+    }
+  }
+
+  fun togglePeriod(period: Int) {
+    days.forEach { day ->
+      toggle(day, period)
+    }
+  }
+
+  val cellSize: Dp = 28.dp
+  val headerWidth: Dp = 48.dp
 
   Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-      Column {
-        TextButton(onClick = { dayExpanded = true }) {
-          Text("曜日: ${selectedDay.toJapaneseLabel()}")
-        }
-        DropdownMenu(expanded = dayExpanded, onDismissRequest = { dayExpanded = false }) {
-          DayOfWeek.entries.forEach { day ->
-            DropdownMenuItem(
-              text = { Text(day.toJapaneseLabel()) },
-              onClick = {
-                selectedDay = day
-                dayExpanded = false
-              },
-            )
+    Column {
+      // Header row
+      Row {
+        Box(
+          modifier = Modifier
+            .size(width = headerWidth, height = cellSize),
+        )
+        days.forEach { day ->
+          Box(
+            modifier = Modifier
+              .size(cellSize)
+              .border(1.dp, MaterialTheme.colorScheme.outline)
+              .clip(RectangleShape)
+              .clickable { toggleDay(day) },
+            contentAlignment = Alignment.Center,
+          ) {
+            Text(day.toJapaneseLabel(), style = MaterialTheme.typography.labelLarge)
           }
         }
       }
 
-      Column {
-        TextButton(onClick = { periodExpanded = true }) {
-          Text("時限: $selectedPeriod")
-        }
-        DropdownMenu(expanded = periodExpanded, onDismissRequest = { periodExpanded = false }) {
-          (1..6).forEach { period ->
-            DropdownMenuItem(
-              text = { Text(period.toString()) },
-              onClick = {
-                selectedPeriod = period
-                periodExpanded = false
-              },
+      // Body
+      periods.forEach { period ->
+        Row {
+          Box(
+            modifier = Modifier
+              .size(width = headerWidth, height = cellSize)
+              .border(1.dp, MaterialTheme.colorScheme.outline)
+              .clip(RectangleShape)
+              .clickable { togglePeriod(period) },
+            contentAlignment = Alignment.Center,
+          ) {
+            Text(period.toString(), style = MaterialTheme.typography.labelLarge)
+          }
+
+          days.forEach { day ->
+            val checked = isChecked(day, period)
+            Box(
+              modifier = Modifier
+                .size(cellSize)
+                .border(1.dp, MaterialTheme.colorScheme.outline)
+                .background(
+                  if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                  else MaterialTheme.colorScheme.surface
+                )
+                .clip(RectangleShape)
+                .clickable { toggle(day, period) },
             )
           }
         }
-      }
-
-      Button(
-        onClick = {
-          val entry = selectedDay to selectedPeriod
-          if (!selected.contains(entry)) {
-            selected.add(entry)
-          }
-        },
-      ) {
-        Text("追加")
       }
     }
 
     if (selected.isNotEmpty()) {
+      val dayOrder = mapOf(
+        DayOfWeek.monday to 1,
+        DayOfWeek.tuesday to 2,
+        DayOfWeek.wednesday to 3,
+        DayOfWeek.thursday to 4,
+        DayOfWeek.friday to 5,
+        DayOfWeek.saturday to 6,
+        DayOfWeek.sunday to 7,
+      )
       Text(
-        text = selected.joinToString(", ") { (day, period) -> "${day.toJapaneseLabel()}$period" },
+        text = selected
+          .sortedWith(compareBy({ dayOrder[it.first] ?: 99 }, { it.second }))
+          .joinToString(", ") { (day, period) -> "${day.toJapaneseLabel()}$period" },
         style = MaterialTheme.typography.bodyMedium,
       )
       TextButton(onClick = { selected.clear() }) {

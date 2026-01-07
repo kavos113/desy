@@ -291,7 +291,7 @@ private fun LectureRelatedSection(
         }
 
         if (clickable) {
-          TextButton(onClick = { onSelectRelatedLecture(course.id!!) }) {
+          TextButton(onClick = { onSelectRelatedLecture(course.id) }) {
             Text(label)
           }
         } else {
