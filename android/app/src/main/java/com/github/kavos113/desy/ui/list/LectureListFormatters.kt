@@ -1,8 +1,8 @@
 package com.github.kavos113.desy.ui.list
 
-import com.github.kavos113.desy.domain.DayOfWeek
 import com.github.kavos113.desy.domain.Semester
 import com.github.kavos113.desy.domain.TimeTable
+import com.github.kavos113.desy.ui.formatters.TimeTableFormatter
 
 internal fun formatLectureOpenTerm(timetables: List<TimeTable>): String {
   val semesters = timetables.mapNotNull { it.semester }.distinct()
@@ -11,21 +11,7 @@ internal fun formatLectureOpenTerm(timetables: List<TimeTable>): String {
 }
 
 internal fun formatLectureTimetable(timetables: List<TimeTable>): String {
-  if (timetables.isEmpty()) return ""
-
-  return timetables
-    .sortedWith(
-      compareBy(
-        { it.semester?.ordinal ?: Int.MAX_VALUE },
-        { it.dayOfWeek?.ordinal ?: Int.MAX_VALUE },
-        { it.period ?: Int.MAX_VALUE },
-      )
-    )
-    .joinToString(",") { tt ->
-      val day = tt.dayOfWeek?.toJapaneseLabel().orEmpty()
-      val period = tt.period?.takeIf { it > 0 }?.toTimeTableLabel().orEmpty()
-      (day + period).ifBlank { "?" }
-    }
+  return TimeTableFormatter.format(timetables = timetables, includeRoom = false)
 }
 
 private fun Semester.toJapaneseLabel(): String = when (this) {
@@ -35,21 +21,4 @@ private fun Semester.toJapaneseLabel(): String = when (this) {
   Semester.winter -> "4Q"
 }
 
-private fun DayOfWeek.toJapaneseLabel(): String = when (this) {
-  DayOfWeek.monday -> "月"
-  DayOfWeek.tuesday -> "火"
-  DayOfWeek.wednesday -> "水"
-  DayOfWeek.thursday -> "木"
-  DayOfWeek.friday -> "金"
-  DayOfWeek.saturday -> "土"
-  DayOfWeek.sunday -> "日"
-}
-
-private fun Int.toTimeTableLabel(): String = when (this) {
-  1 -> "1-2"
-  2 -> "3-4"
-  3 -> "5-6"
-  4 -> "7-8"
-  5 -> "9-10"
-  else -> ""
-}
+// 時間割の表示は TimeTableFormatter に集約
