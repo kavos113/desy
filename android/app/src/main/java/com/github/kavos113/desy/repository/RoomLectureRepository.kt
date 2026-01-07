@@ -13,8 +13,9 @@ import com.github.kavos113.desy.domain.Semester
 import com.github.kavos113.desy.domain.Teacher
 import com.github.kavos113.desy.domain.TimeTable
 import com.github.kavos113.desy.repository.db.DesyDatabase
+import javax.inject.Inject
 
-class RoomLectureRepository(
+class RoomLectureRepository @Inject constructor(
   private val db: DesyDatabase,
 ) : LectureRepository {
   private val lectureDao = db.lectureDao()

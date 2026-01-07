@@ -4,20 +4,16 @@ import com.github.kavos113.desy.domain.Lecture
 import com.github.kavos113.desy.domain.LectureRepository
 import com.github.kavos113.desy.domain.LectureSummary
 import com.github.kavos113.desy.domain.SearchQuery
+import javax.inject.Inject
 
-interface LectureUsecase {
-  suspend fun searchLectures(query: SearchQuery): List<LectureSummary>
-  suspend fun getLectureDetails(lectureId: Int): Lecture?
-}
-
-class DefaultLectureUsecase(
+class LectureUsecase @Inject constructor(
   private val lectureRepository: LectureRepository,
-) : LectureUsecase {
-  override suspend fun searchLectures(query: SearchQuery): List<LectureSummary> {
+) {
+  suspend fun searchLectures(query: SearchQuery): List<LectureSummary> {
     return lectureRepository.search(query)
   }
 
-  override suspend fun getLectureDetails(lectureId: Int): Lecture? {
+  suspend fun getLectureDetails(lectureId: Int): Lecture? {
     if (lectureId <= 0) return null
     return lectureRepository.findById(lectureId)
   }

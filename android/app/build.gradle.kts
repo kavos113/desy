@@ -3,6 +3,8 @@ plugins {
   alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.ksp)
+  alias(libs.plugins.kotlin.kapt)
+  alias(libs.plugins.hilt.android)
 }
 
 android {
@@ -55,6 +57,9 @@ dependencies {
 
   implementation(libs.kotlinx.coroutines.android)
 
+  implementation(libs.dagger.hilt.android)
+  kapt(libs.dagger.hilt.compiler)
+
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)
   androidTestImplementation(libs.androidx.junit)
@@ -64,4 +69,8 @@ dependencies {
   androidTestImplementation(libs.androidx.room.testing)
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+kapt {
+  correctErrorTypes = true
 }
